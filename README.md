@@ -15,7 +15,7 @@ Sources
 * [Markdown](http://daringfireball.net/projects/markdown/syntax) by [John Gruber](http://daringfireball.net/), a great documents' syntax agreement
 * [PegJS](http://pegjs.majda.cz) by [David Majda](http://majda.cz/en/), a JavaScript parsers generator using PEG-like grammars
 * [My Customized PegJS Implementation](https://github.com/shamansir/pegjs) with `chunk` variables inside actions and merged with [this](https://github.com/jdarpinian/pegjs) PegJS predicate fix.  
-* [PegC GUI-oriented Markdown parser](http://hasseg.org/peg-markdown-highlight/) by [Ali Rantakari](http://hasseg.org), the place where I've found a parser and copied it and now I found modifying it for JavaScript
+* [PegC GUI-oriented Markdown parser](http://hasseg.org/peg-markdown-highlight/) by [Ali Rantakari](http://hasseg.org), the place where I've found a parser and copied it and now I am modifying it for JavaScript
 * [PegC Markdown parser](https://github.com/jgm/peg-markdown) by [John MacFarlane](http://johnmacfarlane.net/), the version the previous author adapted to implement his GUI-oriented version and in fact the actual and the main PegC parser (and I am taking parts from there to include new things here)
 * [PegC](http://fossil.wanderinghorse.net/repos/pegc/index.cgi/index), itself
 * [PegHS Markdown parser](https://github.com/jgm/markdown-peg), again by [John MacFarlane](http://johnmacfarlane.net/), if you are interested
@@ -51,4 +51,28 @@ So currently, the *lists* are parsed ok, but I plan to modify their rules to sup
 Which Way the Result Looks Like
 -------------------------------
 
-When parsing a MarkDown document, you get a JavaScript Object containing the document tree in Markdown terms. I'll make a detailed description when finish an implementation.
+When parsing a MarkDown document, you get a JavaScript Object containing the document tree in Markdown terms. I'll make a detailed description when I'll finish an implementation.
+
+To Develop
+----------
+
+Install last [node.js](http://nodejs.org/#download) version (`v0.5.8+`)
+
+Install [npm](http://npmjs.org/)
+
+Run in node directory (or with `-g`):
+
+    npm install pegjs
+    npm install jake@1.7 # or higher
+
+    cd ~/Worktable # (for example)
+    git clone git@github.com:shamansir/pegjs.git
+    cd ./pegjs
+    jake build
+    node test/run
+    ln -sf ~/Worktable/pegjs <nodejs-location>/lib/node_modules
+    ln -s <nodejs-location>/lib/node_modules ./node_modules # optional, if pegjs module not found
+    cd ~/Workspace # (for example) 
+    git clone git@github.com:shamansir/mdown-parse-pegjs.git
+    cd ./mdown-parse-pegjs
+    node ./test-mdown-parser-with-node.js

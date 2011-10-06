@@ -92,8 +92,12 @@ IndentedBlockL5 = BlankLine*
                   (VerbatimL6 / Indent Indent Indent Indent Indent BlockElm)
                   BlankLine*
 
-AnyIndentedBlock = ( IndentedBlockL1 / IndentedBlockL2 / IndentedBlockL3 /
-                     IndentedBlockL4 / IndentedBlockL5 )
+/*AnyIndentedBlock = ( IndentedBlockL1 / IndentedBlockL2 / IndentedBlockL3 /
+                     IndentedBlockL4 / IndentedBlockL5 )*/
+
+AnyIndentedBlock = BlankLine*
+                   idn:Indent+ &{ console.log(idn); return true; } BlockElm
+                   BlankLine*                   
 
 Para =      NonindentSpace txt:Inlines BlankLine+ { d.add(d.elem_ct(t.pmd_PARA,_chunk,txt)); }
 

@@ -47,6 +47,9 @@
 
     d.start();
 
+    d.deep = 0; // TODO: move to before(state)
+    d.passed = [];
+
 }
 
 start =     Doc { d.end(); return d.state; }
@@ -66,38 +69,12 @@ BlockElm = ( BlockQuote
             / HtmlBlock
             / StyleBlock
             / Para
+            / Verbatim
             / Plain )
 
 Block =     BlankLine*
-            (VerbatimL1 / BlockElm)
+            BlockElm
             BlankLine*
-
-IndentedBlockL1 = BlankLine*
-                  (VerbatimL2 / Indent BlockElm)
-                  BlankLine*
-
-IndentedBlockL2 = BlankLine*
-                  (VerbatimL3 / Indent Indent BlockElm)
-                  BlankLine*
-
-IndentedBlockL3 = BlankLine*
-                  (VerbatimL4 / Indent Indent Indent BlockElm)
-                  BlankLine*
-
-IndentedBlockL4 = BlankLine*
-                  (VerbatimL5 / Indent Indent Indent Indent BlockElm)
-                  BlankLine*
-
-IndentedBlockL5 = BlankLine*
-                  (VerbatimL6 / Indent Indent Indent Indent Indent BlockElm)
-                  BlankLine*
-
-/*AnyIndentedBlock = ( IndentedBlockL1 / IndentedBlockL2 / IndentedBlockL3 /
-                     IndentedBlockL4 / IndentedBlockL5 )*/
-
-AnyIndentedBlock = BlankLine*
-                   idn:Indent+ &{ console.log(idn); return true; } BlockElm
-                   BlankLine*                   
 
 Para =      NonindentSpace txt:Inlines BlankLine+ { d.add(d.elem_ct(t.pmd_PARA,_chunk,txt)); }
 
@@ -147,52 +124,38 @@ BlockQuote = block:BlockBasedBlockquote
                       )+
                       { return lines; } */
 
-BlockBasedBlockquote = w:( l:('>'+ { return _chunk.match } ) ' '?
+BlockBasedBlockquote = !{ console.log(d.deep + ' ************'); }
+                       w:( l:('>'+ { return _chunk.match } ) ' '?
                            { return l.length } )
                        s:LocMarker
                        start:( Block { return _chunk.match } )
-                       next:( !'>' AnyIndentedBlock { return _chunk.match; } )*
+                       !{ console.log(start);
+                          console.log('increasing deep to ' + (d.deep + 1));
+                          d.deep = d.deep + 1; }
+                       next:( !'>' ind:Indents 
+                                   &{ console.log('indent is ' + ind + ', deep is ' + d.deep);
+                                      console.log('passed at deep ' + d.deep + ': ' + (ind == d.deep));
+                                      d.passed[d.deep] = (ind == d.deep);
+                                      if (ind == d.deep) return true;
+                                      /* d.deep = d.deep - 1;
+                                      console.log('not passed, decreased deep to ' + d.deep);
+                                      return false;*/ }
+                                   Block 
+                                   { console.log(_chunk.match);
+                                     return _chunk.match; } )*
+                       !{ d.deep = d.deep - 1; 
+                          console.log('returning, decreased deep to ' + d.deep); }              
                        ( BlankLine )*
                        { return { 'text': start+next.join(''), 'start': s, 'level': w } }
 
 // FIXME: verbatim must save the text without indent (blockquotes may)
 // FIXME: blockquote collects last blank line (or let it be?)
 
-VerbatimChunkL1 = ( BlankLine )*
-                  ( !BlankLine Indent Line )+
+VerbatimChunk = ( BlankLine )*
+                ( !BlankLine Indent+ Line )+
 
-VerbatimChunkL2 = ( BlankLine )*
-                  ( !BlankLine Indent Indent+ Line )+
-
-VerbatimChunkL3 = ( BlankLine )*
-                  ( !BlankLine Indent Indent Indent+ Line )+
-
-VerbatimChunkL4 = ( BlankLine )*
-                  ( !BlankLine Indent Indent Indent Indent+ Line )+
-
-VerbatimChunkL5 = ( BlankLine )*
-                  ( !BlankLine Indent Indent Indent Indent Indent+ Line )+
-
-VerbatimChunkL6 = ( BlankLine )*
-                  ( !BlankLine Indent Indent Indent Indent Indent Indent+ Line )+
-
-VerbatimL1 = VerbatimChunkL1+
-             { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)) }
-
-VerbatimL2 = VerbatimChunkL2+
-             { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)) }
-
-VerbatimL3 = VerbatimChunkL3+
-             { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)) }
-
-VerbatimL4 = VerbatimChunkL4+
-             { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)) }
-
-VerbatimL5 = VerbatimChunkL5+
-             { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)) }
-
-VerbatimL6 = VerbatimChunkL6+
-             { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)) }
+Verbatim = VerbatimChunk+
+           { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)) }
 
 HorizontalRule = NonindentSpace
                  s1:LocMarker
@@ -203,7 +166,7 @@ HorizontalRule = NonindentSpace
                  Sp Newline BlankLine+
                  { d.add(d.elem_pe(t.pmd_HRULE,s1,s2)) }
 
-Bullet = !HorizontalRule NonindentSpace s:LocMarker ('+' / '*' / '-') Spacechar+
+Bullet = !HorizontalRule NonindentSpace ('+' / '*' / '-') Spacechar+
 
 Enumerator = NonindentSpace [0-9]+ '.' Spacechar+
 
@@ -684,9 +647,9 @@ HexEntity =     '&' '#' [Xx] [0-9a-fA-F]+ ';'
 DecEntity =     '&' '#' [0-9]+ ';'
 CharEntity =    '&' [A-Za-z0-9]+ ';'
 
-// TODO: allow indenting lists with 3 spaces ?
 NonindentSpace =    "   " / "  " / " " / ""
 Indent =            "\t" / "    "
+Indents =           ind:Indent+ { return ind.length; }
 IndentedLine =      Indent txt:Line { return txt }
 OptionallyIndentedLine = Indent? txt:Line { return txt }
 

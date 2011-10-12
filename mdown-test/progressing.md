@@ -87,10 +87,10 @@ lines
     Third paragraph with both
     lines indented
 
-    Some verbatim {
-        return wooo;
-            boo;
-    }
+        Some verbatim {
+            return wooo;
+                boo;
+        }
 
     And **one** paragraph in the end
 

@@ -15,10 +15,10 @@ try {
     $_parser = parser; // a global variable to use from inside parse process
     var result = parser.parse(testContent);
     console.log('=====');
-    /*console.log('result:',
+    console.log('result:',
         result.info(1 + 2 + 4 + 8
            // V_SHOW_DATA(1) | V_SHOW_CHLD(2) | V_NO_STRIP_DATA(4) | V_NO_PAD_TEXT(8)
-        ));*/
+        ));
 } catch(e) {
     console.log('error',e);
     throw e;

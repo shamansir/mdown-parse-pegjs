@@ -43,6 +43,10 @@ djjdjd
 
     A first paragraph inside the blockquote
 
+    A second paragraph inside the blockquote
+
+    ------
+
         and the Verbatim inside the blockquote
         With some lines of code
         Yep

@@ -59,26 +59,28 @@ Doc =       ( Block )*
 // placeholder for marking locations
 LocMarker = &. { return _chunk.pos; }
 
-BlockElm = ( BlockQuote
-            / Note
-            / Reference
-            / HorizontalRule
-            / Heading
-            / OrderedList
-            / BulletList
-            / HtmlBlock
-            / StyleBlock
-            / Para
-            / Verbatim
-            / Plain )
+BlockElm = b:( BlockQuote
+              / Note
+              / Reference
+              / HorizontalRule
+              / Heading
+              / OrderedList
+              / BulletList
+              / HtmlBlock
+              / StyleBlock
+              / Para
+              / Plain ) { // all block-elms return their numeric types
+                          return b; }
 
 Block =     BlankLine*
-            BlockElm
+            (Verbatim / BlockElm)
             BlankLine*
 
-Para =      NonindentSpace txt:Inlines BlankLine+ { d.add(d.elem_ct(t.pmd_PARA,_chunk,txt)); }
+Para =      NonindentSpace txt:Inlines BlankLine+ 
+            { d.add(d.elem_ct(t.pmd_PARA,_chunk,txt));
+              return t.pmd_PARA; }
 
-Plain =     Inlines
+Plain =     Inlines { return -1; }
 
 AtxInline = !Newline !(Sp? '#'* Sp Newline) Inline
 
@@ -88,7 +90,7 @@ AtxStart =  hashes:( "######" / "#####" / "####" / "###" / "##" / "#" )
 AtxHeading = hx:AtxStart Sp?
              txt:( ( AtxInline )+ { return _chunk.match } )
              (Sp? '#'* Sp)? Newline
-             { d.add(d.elem_ct(hx,_chunk,txt)) }
+             { d.add(d.elem_ct(hx,_chunk,txt)); return hx; }
 
 SetextHeading = SetextHeading1 / SetextHeading2
 
@@ -100,18 +102,21 @@ SetextHeading1 =  &(RawLine SetextBottom1)
                   s:LocMarker
                   txt:( ( !Endline Inline )+ { return _chunk.match } ) Sp? Newline
                   SetextBottom1
-                  { d.add(d.elem_pet(t.pmd_H1,s,_chunk.end,txt)) }
+                  { d.add(d.elem_pet(t.pmd_H1,s,_chunk.end,txt)); 
+                    return t.pmd_H1; }
 
 SetextHeading2 =  &(RawLine SetextBottom2)
                   s:LocMarker
                   txt:( ( !Endline Inline )+ { return _chunk.match } ) Sp? Newline
                   SetextBottom2
-                  { d.add(d.elem_pet(t.pmd_H2,s,_chunk.end,txt)) }
+                  { d.add(d.elem_pet(t.pmd_H2,s,_chunk.end,txt));
+                    return t.pmd_H2; }
 
-Heading = SetextHeading / AtxHeading
+Heading = SetextHeading / AtxHeading { return t.pmd_H1; }
 
 BlockQuote = block:BlockBasedBlockquote
-             { d.add(d.elem_ct(t.pmd_BLOCKQUOTE,_chunk,block.text),block); }
+             { d.add(d.elem_ct(t.pmd_BLOCKQUOTE,_chunk,block.text),block);
+               return t.pmd_BLOCKQUOTE; }
 
 /* OneLinersBlockquote = lines:(
                          w:( l:('>'+ { return _chunk.match } ) ' '? { return l.length } )
@@ -132,30 +137,35 @@ BlockBasedBlockquote = !{ console.log(d.deep + ' ************'); }
                        !{ console.log(start);
                           console.log('increasing deep to ' + (d.deep + 1));
                           d.deep = d.deep + 1; }
-                       next:( !'>' ind:Indents 
-                                   &{ console.log('indent is ' + ind + ', deep is ' + d.deep);
-                                      console.log('passed at deep ' + d.deep + ': ' + (ind == d.deep));
-                                      d.passed[d.deep] = (ind == d.deep);
-                                      if (ind == d.deep) return true;
-                                      /* d.deep = d.deep - 1;
-                                      console.log('not passed, decreased deep to ' + d.deep);
-                                      return false;*/ }
-                                   Block 
+                       BlankLine*
+                       next:( !'>' ( Verbatim / 
+                                     ( ind:Indents
+                                       &{ console.log('indent is ' + ind + ', deep is ' + d.deep);
+                                          console.log('passed at deep ' + d.deep + ': ' + (ind == d.deep));
+                                          return (ind == d.deep);
+                                          /* d.deep = d.deep - 1;
+                                          console.log('not passed, decreased deep to ' + d.deep);
+                                          return false;*/ } 
+                                       b:BlockElm ) )        
+                                   BlankLine*
                                    { console.log(_chunk.match);
                                      return _chunk.match; } )*
                        !{ d.deep = d.deep - 1; 
                           console.log('returning, decreased deep to ' + d.deep); }              
-                       ( BlankLine )*
+                       BlankLine*
                        { return { 'text': start+next.join(''), 'start': s, 'level': w } }
 
 // FIXME: verbatim must save the text without indent (blockquotes may)
-// FIXME: blockquote collects last blank line (or let it be?)
 
-VerbatimChunk = ( BlankLine )*
-                ( !BlankLine Indent+ Line )+
+VerbatimChunk = ( !BlankLine 
+                  ind:Indents &{ return (ind > d.deep); }  
+                  Line )+
 
-Verbatim = VerbatimChunk+
-           { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)) }
+Verbatim = !{ console.log('matching verbatim'); }
+           (VerbatimChunk BlankLine*)+
+           { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)); 
+             console.log('t.pmd_VERBATIM == ' + t.pmd_VERBATIM);
+             return t.pmd_VERBATIM; }
 
 HorizontalRule = NonindentSpace
                  s1:LocMarker
@@ -164,17 +174,20 @@ HorizontalRule = NonindentSpace
                  / '_' Sp '_' Sp '_' (Sp '_')*)
                  s2:LocMarker
                  Sp Newline BlankLine+
-                 { d.add(d.elem_pe(t.pmd_HRULE,s1,s2)) }
+                 { d.add(d.elem_pe(t.pmd_HRULE,s1,s2));
+                   return t.pmd_HRULE; }
 
 Bullet = !HorizontalRule NonindentSpace ('+' / '*' / '-') Spacechar+
 
 Enumerator = NonindentSpace [0-9]+ '.' Spacechar+
 
 BulletList = &Bullet data:(ListTightBullet / ListLooseBullet)
-             { d.add(d.elem_ct(t.pmd_LIST_BULLET,_chunk,extractListText(data)),data) }
+             { d.add(d.elem_ct(t.pmd_LIST_BULLET,_chunk,extractListText(data)),data);
+               return t.pmd_LIST_BULLET; }
 
 OrderedList = &Enumerator data:(ListTightEnumerator / ListLooseEnumerator)
-              { d.add(d.elem_ct(t.pmd_LIST_ENUMERATOR,_chunk,extractListText(data)),data) }
+              { d.add(d.elem_ct(t.pmd_LIST_ENUMERATOR,_chunk,extractListText(data)),data);
+                return t.pmd_LIST_ENUMERATOR; }
 
 ListTightBullet = data:( ( ListItemTightBullet )+ )
                   BlankLine* !(Bullet / Enumerator)
@@ -418,7 +431,8 @@ HtmlBlockInTags = HtmlBlockAddress
 
 HtmlBlock = html:( ( HtmlBlockInTags / HtmlComment / HtmlBlockSelfClosing ) { return _chunk.match } )
             BlankLine+
-            { d.add(d.elem_ct(t.pmd_HTML,_chunk,html)) }
+            { d.add(d.elem_ct(t.pmd_HTML,_chunk,html));
+              return t.pmd_HTML; }
 
 HtmlBlockSelfClosing = '<' Spnl HtmlBlockType Spnl HtmlAttribute* '/' Spnl '>'
 
@@ -434,7 +448,7 @@ StyleOpen =     '<' Spnl ("style" / "STYLE") Spnl HtmlAttribute* '>'
 StyleClose =    '<' Spnl '/' ("style" / "STYLE") Spnl '>'
 InStyleTags =   StyleOpen (!StyleClose .)* StyleClose
 StyleBlock =    InStyleTags
-                BlankLine*
+                BlankLine* { return t.pmd_HTML; }
 
 Inlines  =  ( !Endline Inline
               / Endline &Inline )+ Endline? { return _chunk.match }
@@ -582,6 +596,7 @@ Reference = NonindentSpace !"[]" lbl:Label ':' Spnl src:RefSrc ttl:RefTitle Blan
                 var el = d.elem_cz(t.pmd_REFERENCE,_chunk);
                 d.add(el,{ 'label': lbl, 'source': src, 'title': ttl });
                 d.save_ref(lbl,el);
+                return t.pmd_REFERENCE;
             }
 
 //Label = '[' ( !'^' &{ d.ext(e.pmd_EXT_FOOTNOTES) } / &. &{ !d.ext(e.pmd_EXT_FOOTNOTES) } )
@@ -675,7 +690,9 @@ RawNoteReference = "[^" ( !Newline !']' . )+ ']'
 Note =          &{ d.ext(e.pmd_EXT_FOOTNOTES) }
                 NonindentSpace RawNoteReference ':' Sp
                 ( RawNoteBlock )
-                ( &Indent RawNoteBlock )*
+                ( &Indent RawNoteBlock )* {
+                    return t.pmd_NOTE;
+                }
 
 InlineNote =    &{ d.ext(e.pmd_EXT_FOOTNOTES) }
                 "^["

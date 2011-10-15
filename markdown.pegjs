@@ -48,7 +48,8 @@
     d.start();
 
     d.deep = 0; // TODO: move to before(state)
-    d.passed = [];
+
+    // TODO: _chunk.match is not required for parsers, remove element text?
 
 }
 
@@ -76,7 +77,9 @@ Block =     BlankLine*
             (Verbatim / BlockElm)
             BlankLine*
 
-Para =      NonindentSpace txt:Inlines BlankLine+ 
+Para =      NonindentSpace 
+            txt:Inlines 
+            BlankLine+ 
             { d.add(d.elem_ct(t.pmd_PARA,_chunk,txt));
               return t.pmd_PARA; }
 
@@ -137,7 +140,7 @@ BlockBasedBlockquote = w:( l:('>'+ { return _chunk.match } ) ' '?
                        !{ d.deep = d.deep + 1; }
                        next:( !'>' ( Verbatim / 
                                      ( ind:Indents
-                                       &{ return (ind == d.deep); } 
+                                       &{ return (ind === d.deep); } 
                                        BlockElm ) )        
                                    BlankLine*
                                    { return _chunk.match; } )*
@@ -175,25 +178,23 @@ OrderedList = &Enumerator data:OrderedListItems
               { d.add(d.elem_ct(t.pmd_LIST_ENUMERATOR,_chunk,_chunk.match),data);
                 return t.pmd_LIST_ENUMERATOR; }
 
-BulletListItems = ( data:( i:ListItemBullet BlankLine* { return i } )+ ) { return data }
+BulletListItems = ( data:( 
+                     i:( ListItemBulletLines / (ListItemBullet BlankLine*) ) { return i } 
+                    )+ ) { return data; }
 
-OrderedListItems = ( data:( i:ListItemEnumerator BlankLine* { return i } )+ ) { return data }
+OrderedListItems = ( data:( 
+                      i:( ListItemEnumeratorLines / (ListItemEnumerator BlankLine*) ) { return i }
+                     )+ ) { return data; }
 
-/* w:( l:('>'+ { return _chunk.match } ) ' '?
-                           { return l.length } )
-                       s:LocMarker
-                       start:( BlockElm { return _chunk.match } )
-                       BlankLine*
-                       !{ d.deep = d.deep + 1; }
-                       next:( !'>' ( Verbatim / 
-                                     ( ind:Indents
-                                       &{ return (ind == d.deep); } 
-                                       BlockElm ) )        
-                                   BlankLine*
-                                   { return _chunk.match; } )*
-                       !{ d.deep = d.deep - 1; }              
-                       BlankLine*
-                       { return { 'text': start+next.join(''), 'start': s, 'level': w } } */
+ListItemBulletLines = s:LocMarker Bullet o:LocMarker
+                      i:(Inlines { return _chunk.match; } )
+                      !BlankLine { d.add(d.elem_c(t.pmd_LIST_BULLET_ITEM,_chunk));
+                                   return [s,o,i]; }
+
+ListItemEnumeratorLines = s:LocMarker Enumerator o:LocMarker 
+                          i:(Inlines { return _chunk.match; } )
+                          !BlankLine { d.add(d.elem_c(t.pmd_LIST_ENUM_ITEM,_chunk));
+                                       return [s,o,i]; }
 
 ListItemBullet = s:LocMarker Bullet
                  o:LocMarker
@@ -203,12 +204,13 @@ ListItemBullet = s:LocMarker Bullet
                  next:( !(Bullet / Enumerator)
                         ( Verbatim / 
                           ( ind:Indents
-                            &{ return (ind == d.deep); } 
+                            &{ return (ind === d.deep); } 
                             BlockElm ) )
                         BlankLine*
                         { return _chunk.match; } )*
                  !{ d.deep = d.deep - 1; }
-                 { return [s,(o-s),start+next.join(''),
+                 { d.add(d.elem_c(t.pmd_LIST_BULLET_ITEM,_chunk));
+                   return [s,(o-s),start+next.join(''),
                                    _chunk.match.substring(o-s)]; }                                 
 
 ListItemEnumerator = s:LocMarker Enumerator
@@ -219,12 +221,13 @@ ListItemEnumerator = s:LocMarker Enumerator
                      next:( !(Bullet / Enumerator)
                             ( Verbatim / 
                               ( ind:Indents
-                                &{ return (ind == d.deep); } 
+                                &{ return (ind === d.deep); } 
                                 BlockElm ) )
                             BlankLine*
                             { return _chunk.match; } )*
                      !{ d.deep = d.deep - 1; }
-                     { return [s,(o-s),start+next.join(''),
+                     { d.add(d.elem_c(t.pmd_LIST_ENUM_ITEM,_chunk));
+                       return [s,(o-s),start+next.join(''),
                                        _chunk.match.substring(o-s)]; }
 
 // Parsers for different kinds of block-level HTML content.
@@ -425,8 +428,15 @@ InStyleTags =   StyleOpen (!StyleClose .)* StyleClose
 StyleBlock =    InStyleTags
                 BlankLine* { return t.pmd_HTML; }
 
-Inlines  =  ( !Endline Inline
-              / Endline &Inline )+ Endline? { return _chunk.match }
+Inlines  =  ( !Endline
+                ( Sp / Indent* )
+                !('>' / Bullet / Enumerator)
+                Inline
+              / Endline
+                ( Sp / Indent* )
+                !('>' / Bullet / Enumerator)
+                &Inline )+ 
+            Endline? { return _chunk.match }
 
 Inline  = Str
         / Endline

@@ -74,7 +74,7 @@ djjdjd
 >> 5. Paragraph
 >>
 >>    Header
-> >   ------
+>>    ------
 >> 6. He-je
 >> 7. * Yep
 >>     * It is
@@ -113,8 +113,8 @@ With several lines,alhtough
 Line with 0 spaces at left
 
     And this is second paragraph of first item
- 1. An asterix * and *strong* inside
- 1. One more item
+1. An asterix * and *strong* inside
+1. One more item
 
 256. Woo
 9. Back

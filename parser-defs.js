@@ -38,37 +38,15 @@ t.pmd_HRULE           = 22;   /**< Horizontal rule */
 t.pmd_REFERENCE       = 23;   /**< Reference */
 t.pmd_NOTE            = 24;   /**< Note */
 
-// Utility types used by the parser itself:
-
-// List of pmd_RAW element lists, each to be processed separately from
-// others (for each element in linked lists of this type, `children` points
-// to a linked list of pmd_RAW elements):
-t.pmd_RAW_LIST        = 25,   /**< Internal to parser. Please ignore. */
+t.pmd_LIST_BULLET_ITEM = 25;  /**< Item of Bullet list */
+t.pmd_LIST_ENUM_ITEM   = 26; /**< Item of Enumerator list */
 
 // Span marker for positions in original input to be post-processed
 // in a second parsing step:
-t.pmd_RAW             = 26,   /**< Internal to parser. Please ignore. */
-
-// Additional text to be parsed along with spans in the original input
-// (these may be added to linked lists of pmd_RAW elements):
-t.pmd_EXTRA_TEXT      = 27,   /**< Internal to parser. Please ignore. */
-
-// Separates linked lists of pmd_RAW elements into parts to be processed
-// separate from each other:
-t.pmd_SEPARATOR       = 28,   /**< Internal to parser. Please ignore. */
-
-// Placeholder element used while parsing:
-t.pmd_NO_TYPE         = 29,   /**< Internal to parser. Please ignore. */
-
-// Linked list of *all* elements created while parsing:
-t.pmd_ALL             = 30    /**< Internal to parser. Please ignore. */;
+t.pmd_RAW             = 27;   /**< Internal to parser. Please ignore. */
 
 t.type_name = function(type) {
     switch (type) {
-        case t.pmd_SEPARATOR:          return "SEPARATOR";
-        case t.pmd_EXTRA_TEXT:         return "EXTRA_TEXT";
-        case t.pmd_NO_TYPE:            return "NO_TYPE";
-        case t.pmd_RAW_LIST:           return "RAW_LIST";
         case t.pmd_RAW:                return "RAW";
 
         case t.pmd_PARA:               return "PARA";
@@ -97,6 +75,9 @@ t.type_name = function(type) {
 
         case t.pmd_AUTO_LINK_URL:      return "AUTO_LINK_URL";
         case t.pmd_AUTO_LINK_EMAIL:    return "AUTO_LINK_EMAIL";
+
+        case t.pmd_LIST_BULLET_ITEM:   return "LIST_BULLET_ITEM";
+        case t.pmd_LIST_ENUM_ITEM:     return "LIST_ENUM_ITEM";
 
         default:                       return "?";
     }

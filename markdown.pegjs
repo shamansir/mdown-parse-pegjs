@@ -132,7 +132,7 @@ BlockQuote = block:BlockBasedBlockquote
 BlockBasedBlockquote = w:( l:('>'+ { return _chunk.match } ) ' '?
                            { return l.length } )
                        s:LocMarker
-                       start:( Block { return _chunk.match } )
+                       start:( BlockElm { return _chunk.match } )
                        BlankLine*
                        !{ d.deep = d.deep + 1; }
                        next:( !'>' ( Verbatim / 
@@ -167,86 +167,65 @@ Bullet = !HorizontalRule NonindentSpace ('+' / '*' / '-') Spacechar+
 
 Enumerator = NonindentSpace [0-9]+ '.' Spacechar+
 
-BulletList = &Bullet data:(ListTightBullet / ListLooseBullet)
-             { d.add(d.elem_ct(t.pmd_LIST_BULLET,_chunk,extractListText(data)),data);
+BulletList = &Bullet data:BulletListItems
+             { d.add(d.elem_ct(t.pmd_LIST_BULLET,_chunk,_chunk.match),data);
                return t.pmd_LIST_BULLET; }
 
-OrderedList = &Enumerator data:(ListTightEnumerator / ListLooseEnumerator)
-              { d.add(d.elem_ct(t.pmd_LIST_ENUMERATOR,_chunk,extractListText(data)),data);
+OrderedList = &Enumerator data:OrderedListItems
+              { d.add(d.elem_ct(t.pmd_LIST_ENUMERATOR,_chunk,_chunk.match),data);
                 return t.pmd_LIST_ENUMERATOR; }
 
-ListTightBullet = data:( ( ListItemTightBullet )+ )
-                  BlankLine* !(Bullet / Enumerator)
-                  { return data }
+BulletListItems = ( data:( i:ListItemBullet BlankLine* { return i } )+ ) { return data }
 
-ListTightEnumerator = data:( ( ListItemTightEnumerator )+ )
-                      BlankLine* !(Bullet / Enumerator)
-                      { return data }
+OrderedListItems = ( data:( i:ListItemEnumerator BlankLine* { return i } )+ ) { return data }
 
-ListLooseBullet = ( data:( i:ListItemBullet BlankLine* { return i } )+ ) { return data }
-
-ListLooseEnumerator = ( data:( i:ListItemEnumerator BlankLine* { return i } )+ ) { return data }
+/* w:( l:('>'+ { return _chunk.match } ) ' '?
+                           { return l.length } )
+                       s:LocMarker
+                       start:( BlockElm { return _chunk.match } )
+                       BlankLine*
+                       !{ d.deep = d.deep + 1; }
+                       next:( !'>' ( Verbatim / 
+                                     ( ind:Indents
+                                       &{ return (ind == d.deep); } 
+                                       BlockElm ) )        
+                                   BlankLine*
+                                   { return _chunk.match; } )*
+                       !{ d.deep = d.deep - 1; }              
+                       BlankLine*
+                       { return { 'text': start+next.join(''), 'start': s, 'level': w } } */
 
 ListItemBullet = s:LocMarker Bullet
                  o:LocMarker
-                 start:ListBlock
-                 /*!{ d.deep = d.deep + 1; }*/
-                 cont:( ( ListContinuationBlock )* )
-                 /*!{ d.deep = d.deep - 1; }*/
-                 { return [s,(o-s),packListData(start, cont),
-                                   _chunk.match.substring(o-s)] }                                 
+                 start:( BlockElm { return _chunk.match; } )
+                 BlankLine*
+                 !{ d.deep = d.deep + 1; }
+                 next:( !(Bullet / Enumerator)
+                        ( Verbatim / 
+                          ( ind:Indents
+                            &{ return (ind == d.deep); } 
+                            BlockElm ) )
+                        BlankLine*
+                        { return _chunk.match; } )*
+                 !{ d.deep = d.deep - 1; }
+                 { return [s,(o-s),start+next.join(''),
+                                   _chunk.match.substring(o-s)]; }                                 
 
 ListItemEnumerator = s:LocMarker Enumerator
                      o:LocMarker
-                     start:ListBlock
-                     /*!{ d.deep = d.deep + 1; }*/
-                     cont:( ( ListContinuationBlock )* )
-                     /*!{ d.deep = d.deep - 1; }*/
-                     { return [s,(o-s),packListData(start, cont),
-                                       _chunk.match.substring(o-s)] }
-
-ListItemTightBullet =
-                s:LocMarker Bullet
-                o:LocMarker
-                start:ListBlock
-                /*!{ d.deep = d.deep + 1; }*/
-                cont:( ( !BlankLine
-                         i:ListContinuationBlock { return i } )* )
-                /*!{ d.deep = d.deep - 1; }*/
-                !ListContinuationBlock
-                { return [s,(o-s),packListData(start, cont),
-                                  _chunk.match.substring(o-s)] }
-
-ListItemTightEnumerator =
-                s:LocMarker Enumerator
-                o:LocMarker
-                start:ListBlock
-                /*!{ d.deep = d.deep + 1; }*/
-                cont:( ( !BlankLine
-                         i:ListContinuationBlock { return i } )* )
-                /*!{ d.deep = d.deep - 1; }*/
-                !ListContinuationBlock
-                { return [s,(o-s),packListData(start, cont),
-                                  _chunk.match.substring(o-s)] }
-
-ListBlock = !BlankLine start:Line
-            cont:( ( ListBlockLine )* )
-            { for (var i = 0, joined = [start]; i < cont.length; i++) {
-                  joined.push(cont[i]);
-              }
-              return joined; }
-
-ListContinuationBlock = ( BlankLine* )
-                        txt:( ( ind:Indents
-                                /*&{ return (ind == d.deep); }*/
-                                i:ListBlock { return i } )+ )
-                        { return txt; }
-
-ListBlockLine = !BlankLine
-                !( Indent? (Bullet / Enumerator) )
-                !HorizontalRule
-                txt:OptionallyIndentedLine
-                { return txt }
+                     start:( BlockElm { return _chunk.match; } )
+                     BlankLine*
+                     !{ d.deep = d.deep + 1; }
+                     next:( !(Bullet / Enumerator)
+                            ( Verbatim / 
+                              ( ind:Indents
+                                &{ return (ind == d.deep); } 
+                                BlockElm ) )
+                            BlankLine*
+                            { return _chunk.match; } )*
+                     !{ d.deep = d.deep - 1; }
+                     { return [s,(o-s),start+next.join(''),
+                                       _chunk.match.substring(o-s)]; }
 
 // Parsers for different kinds of block-level HTML content.
 // This is repetitive due to constraints of PEG grammar.

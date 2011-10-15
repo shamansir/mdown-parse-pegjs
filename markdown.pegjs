@@ -129,42 +129,28 @@ BlockQuote = block:BlockBasedBlockquote
                       )+
                       { return lines; } */
 
-BlockBasedBlockquote = !{ console.log(d.deep + ' ************'); }
-                       w:( l:('>'+ { return _chunk.match } ) ' '?
+BlockBasedBlockquote = w:( l:('>'+ { return _chunk.match } ) ' '?
                            { return l.length } )
                        s:LocMarker
                        start:( Block { return _chunk.match } )
-                       !{ console.log(start);
-                          console.log('increasing deep to ' + (d.deep + 1));
-                          d.deep = d.deep + 1; }
                        BlankLine*
+                       !{ d.deep = d.deep + 1; }
                        next:( !'>' ( Verbatim / 
                                      ( ind:Indents
-                                       &{ console.log('indent is ' + ind + ', deep is ' + d.deep);
-                                          console.log('passed at deep ' + d.deep + ': ' + (ind == d.deep));
-                                          return (ind == d.deep);
-                                          /* d.deep = d.deep - 1;
-                                          console.log('not passed, decreased deep to ' + d.deep);
-                                          return false;*/ } 
-                                       b:BlockElm ) )        
+                                       &{ return (ind == d.deep); } 
+                                       BlockElm ) )        
                                    BlankLine*
-                                   { console.log(_chunk.match);
-                                     return _chunk.match; } )*
-                       !{ d.deep = d.deep - 1; 
-                          console.log('returning, decreased deep to ' + d.deep); }              
+                                   { return _chunk.match; } )*
+                       !{ d.deep = d.deep - 1; }              
                        BlankLine*
                        { return { 'text': start+next.join(''), 'start': s, 'level': w } }
-
-// FIXME: verbatim must save the text without indent (blockquotes may)
 
 VerbatimChunk = ( !BlankLine 
                   ind:Indents &{ return (ind > d.deep); }  
                   Line )+
 
-Verbatim = !{ console.log('matching verbatim'); }
-           (VerbatimChunk BlankLine*)+
+Verbatim = (VerbatimChunk BlankLine*)+
            { d.add(d.elem_c(t.pmd_VERBATIM,_chunk)); 
-             console.log('t.pmd_VERBATIM == ' + t.pmd_VERBATIM);
              return t.pmd_VERBATIM; }
 
 HorizontalRule = NonindentSpace
@@ -204,14 +190,18 @@ ListLooseEnumerator = ( data:( i:ListItemEnumerator BlankLine* { return i } )+ )
 ListItemBullet = s:LocMarker Bullet
                  o:LocMarker
                  start:ListBlock
+                 /*!{ d.deep = d.deep + 1; }*/
                  cont:( ( ListContinuationBlock )* )
+                 /*!{ d.deep = d.deep - 1; }*/
                  { return [s,(o-s),packListData(start, cont),
-                                   _chunk.match.substring(o-s)] }
+                                   _chunk.match.substring(o-s)] }                                 
 
 ListItemEnumerator = s:LocMarker Enumerator
                      o:LocMarker
                      start:ListBlock
+                     /*!{ d.deep = d.deep + 1; }*/
                      cont:( ( ListContinuationBlock )* )
+                     /*!{ d.deep = d.deep - 1; }*/
                      { return [s,(o-s),packListData(start, cont),
                                        _chunk.match.substring(o-s)] }
 
@@ -219,8 +209,10 @@ ListItemTightBullet =
                 s:LocMarker Bullet
                 o:LocMarker
                 start:ListBlock
+                /*!{ d.deep = d.deep + 1; }*/
                 cont:( ( !BlankLine
                          i:ListContinuationBlock { return i } )* )
+                /*!{ d.deep = d.deep - 1; }*/
                 !ListContinuationBlock
                 { return [s,(o-s),packListData(start, cont),
                                   _chunk.match.substring(o-s)] }
@@ -229,8 +221,10 @@ ListItemTightEnumerator =
                 s:LocMarker Enumerator
                 o:LocMarker
                 start:ListBlock
+                /*!{ d.deep = d.deep + 1; }*/
                 cont:( ( !BlankLine
                          i:ListContinuationBlock { return i } )* )
+                /*!{ d.deep = d.deep - 1; }*/
                 !ListContinuationBlock
                 { return [s,(o-s),packListData(start, cont),
                                   _chunk.match.substring(o-s)] }
@@ -243,7 +237,9 @@ ListBlock = !BlankLine start:Line
               return joined; }
 
 ListContinuationBlock = ( BlankLine* )
-                        txt:( ( Indent i:ListBlock { return i } )+ )
+                        txt:( ( ind:Indents
+                                /*&{ return (ind == d.deep); }*/
+                                i:ListBlock { return i } )+ )
                         { return txt; }
 
 ListBlockLine = !BlankLine

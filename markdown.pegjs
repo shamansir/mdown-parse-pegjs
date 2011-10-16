@@ -222,17 +222,23 @@ OrderedListInlinedItem = !Space s:LocMarker
                            d.add(d.elem_c(t.pmd_LIST_ENUM_ITEM,_chunk));
                            return [s,o,i]; }
 
+// TODO: check verbatim at start of list items (or blank lines before it)
+// FIXME: "Lazy paragraphs" are not correclty parsed in block-indented lists:
+//        try "Item two in inner list" + \n + Indent? + "some lazyness" in 'single-block-test.md'
+// FIXME: in 'progressing.md' some blocks are erroneously parsed as verbatim again :(
+
 BulletListItem = !Space s:LocMarker Bullet
                  !{ console.log('bl-block-item-start'); }
                  o:LocMarker
                  !{ d.deep = d.deep + 1;
                     console.log('bl-list: deep -> ' + d.deep); }
+                 BlankLine* (ind:Indent* { return (ind.length === d.deep); })
                  start:( BlockElm { return _chunk.match; } )
                  BlankLine*                 
                  next:( !(Bullet / Enumerator)
                         ( Verbatim /
                           ( ind:Indents
-                            &{ console.log('bl-block-indents ' + ind + '/' + d.deep);
+                            &{  console.log('bl-block-indents ' + ind + '/' + d.deep);
                                 return (ind === d.deep); }
                             BlockElm ) )
                         BlankLine*
@@ -242,7 +248,7 @@ BulletListItem = !Space s:LocMarker Bullet
                  { console.log('bl-block-item: <<' + _chunk.match + '>>');
                    d.add(d.elem_c(t.pmd_LIST_BULLET_ITEM,_chunk));
                    return [s,(o-s),start+next.join(''),
-                                   _chunk.match.substring(o-s)]; }                           
+                                   _chunk.match.substring(o-s)]; }                   
 
 OrderedListItem = !Space s:LocMarker Enumerator
                   !{ console.log('ol-block-item-start'); }
@@ -250,6 +256,7 @@ OrderedListItem = !Space s:LocMarker Enumerator
                   !{ d.deep = d.deep + 1;
                      console.log('ol-list: deep -> ' + d.deep); }
                   start:( BlockElm { return _chunk.match; } )
+                  BlankLine* (ind:Indent* { return (ind.length === d.deep); })
                   BlankLine*
                   next:( !(Bullet / Enumerator)
                          ( Verbatim / 

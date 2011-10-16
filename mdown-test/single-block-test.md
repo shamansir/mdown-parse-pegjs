@@ -1,4 +1,10 @@
-*   * Inner list
+* Lazy
+item
+woo
+woo
+*   
+
+    * Inner list
 Second line
     * 2/Innert list
 * Test this:
@@ -21,4 +27,8 @@ Second line
         
         Last paragraph
 
-* Third item  
+* Third item 
+
+* 
+    * sec-level item
+* first-level-item

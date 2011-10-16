@@ -225,10 +225,10 @@ OrderedListInlinedItem = !Space s:LocMarker
 BulletListItem = !Space s:LocMarker Bullet
                  !{ console.log('bl-block-item-start'); }
                  o:LocMarker
-                 start:( BlockElm { return _chunk.match; } )
-                 BlankLine*
                  !{ d.deep = d.deep + 1;
                     console.log('bl-list: deep -> ' + d.deep); }
+                 start:( BlockElm { return _chunk.match; } )
+                 BlankLine*                 
                  next:( !(Bullet / Enumerator)
                         ( Verbatim /
                           ( ind:Indents
@@ -247,10 +247,10 @@ BulletListItem = !Space s:LocMarker Bullet
 OrderedListItem = !Space s:LocMarker Enumerator
                   !{ console.log('ol-block-item-start'); }
                   o:LocMarker
-                  start:( BlockElm { return _chunk.match; } )
-                  BlankLine*
                   !{ d.deep = d.deep + 1;
                      console.log('ol-list: deep -> ' + d.deep); }
+                  start:( BlockElm { return _chunk.match; } )
+                  BlankLine*
                   next:( !(Bullet / Enumerator)
                          ( Verbatim / 
                            ( ind:Indents

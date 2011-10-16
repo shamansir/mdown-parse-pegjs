@@ -16,8 +16,8 @@ try {
     var result = parser.parse(testContent);
     console.log('=====');
     console.log('result:',
-        result.info(2
-           // V_SHOW_DATA(1) | V_SHOW_CHLD(2) | V_NO_STRIP_DATA(4) | V_NO_PAD_TEXT(8)
+        result.info(4
+           // V_SHOW_DATA(1) | V_NO_STRIP_DATA(2) | V_NO_PAD_TEXT(4)
         ));
 } catch(e) {
     console.log('error',e);

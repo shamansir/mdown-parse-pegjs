@@ -359,8 +359,20 @@ function chain_rwalk(chain, func) {
     }
 }
 
-function chain_travel(chain, func) {
-    // TODO:
+/* travel with a function through a chain of elements, going deep if needed. 
+   function may return true to stop at current element and return it */
+function chain_travel(chain, func, deep) {
+    var deep = deep || 0;
+    if (chain.head != null) {
+        var cursor = chain.head;
+        while (cursor != null) {
+            if (func(cursor, deep)) { return cursor; }
+            if (cursor.children.head != null) {
+                chain_travel(cursor.children, func, deep + 1);
+            }; // FIXME: tail recursion?
+            cursor = cursor.next;
+        }
+    }
 }
 
 // =============================================================================
@@ -464,57 +476,14 @@ function release_waiters(state) {
 // =============================================================================
 // SPECIAL =====================================================================
 
-function parse_bquote(bquote) {
-    //var bquote_res = $_parser.parse(bquote.text);
-    console.log(bquote);
-}
-
-function parse_list_data(list) {
-    console.log('~~~~~~~');
-    for (var item_id = 0; item_id < list.length; item_id++) {
-        var start = list[item_id][0];
-        var offset = list[item_id][1];
-        var text = list[item_id][3].split(DBL_EOL);
-        var to_parse = '';
-        console.log('==================');
-        console.log(start, offset, text);
-        console.log('------------------');
-        for (var para_id = 0; para_id < text.length; para_id++) {
-            var para = text[para_id];
-            var lines = para.split(EOL);
-            // FIXME: just for \r\n, recheck the eol for other types
-            var eol_idx = 0;
-            var last_eol = 0;
-            var l_offset = [];
-            var line_id = 0;
-            var cur_offset = /*start + */offset;
-            do {
-                eol_idx = para.indexOf('\r\n', eol_idx + 2);
-                var start = (line_id > 0) ? l_offset[line_id - 1] : 0;
-                var line = (eol_idx >= 0)
-                    ? para.substring(start, eol_idx + 2)
-                    : para.substring(start, para.length);
-                l_offset[line_id] = cur_offset;
-                cur_offset += line.length + 2;
-                line_id += 1;
-            } while (eol_idx >= 0);
-            console.log(lines, l_offset);
-        }
-    }
+function parse_row(data) {
+    
 }
 
 function parse_block_elems(state) {
-    var bullets = state.elems[t.pmd_LIST_BULLET];
-    for (var idx = 0; idx < bullets.length; idx++) {
-        parse_list_data(bullets[idx].data);
-    }
-    var enums = state.elems[t.pmd_LIST_ENUMERATOR];
-    for (var idx = 0; idx < enums.length; idx++) {
-        parse_list_data(enums[idx].data);
-    }
-    var bquotes = state.elems[t.pmd_BLOCKQUOTE];
-    for (var idx = 0; idx < bquotes.length; idx++) {
-        parse_bquote(bquotes[idx].data);
+    var raws = state.elems[t.pmd_BLOCKQUOTE];
+    for (var idx = 0; idx < raws.length; idx++) {
+        parse_raw(raws[idx].data);
     }
 }
 
@@ -590,7 +559,7 @@ module.exports = {
 
 /* return element information string */
 function elem_info(elm, col_width, no_pad_text) {
-    return _pad(elm.pos + ':' + elm.end, 11) + _pad(t.type_name(elm.type), 12) +
+    return _pad(elm.pos + ':' + elm.end, 11) + _pad(t.type_name(elm.type), 18) +
            ((elm.text != null) ? ((no_pad_text)
                                      ? ('\n\n~( ' + elm.text + ' )~\n\n')
                                      : (_pad('<< ' + elm.text + ' >>', col_width || 54)) + '\n')
@@ -599,9 +568,8 @@ function elem_info(elm, col_width, no_pad_text) {
 
 var V_QUICK = 0;
 var V_SHOW_DATA = 1;
-var V_SHOW_CHLD = 2;
-var V_NO_STRIP_DATA = 4;
-var V_NO_PAD_TEXT = 8;
+var V_NO_STRIP_DATA = 2;
+var V_NO_PAD_TEXT = 4;
 
 /* return state information string */
 function state_info(state, view) {
@@ -611,30 +579,17 @@ function state_info(state, view) {
     var result = '\n\n';
     result += '---------------------------- CHAIN ------------------------------------------' + '\n\n';
 
-    chain_walk(state.chain, function(elem) {
-       result += elem_info(elem, 0, (view & V_NO_PAD_TEXT));
+    chain_travel(state.chain, function(elem, deep) {
+       if (view !== V_QUICK) result += '> (' + deep + ') ' + 
+           _pad('.',deep*4) + '] ' + _pad('~',69-deep*4) + '\n\n';
+       result += elem_info(elem,54-(deep*2),(view & V_NO_PAD_TEXT));
        if ((view & V_SHOW_DATA) && elem.data) {
-           result += (view !== V_QUICK) ? '' : _pad('',7);
+           result += (view !== V_QUICK) ? '' : _pad('',deep*2);
            result += 'DATA :: '
                      + ((view & V_NO_STRIP_DATA)
                          ? ('\n\n' + util.inspect(elem.data,false,3))
                          : _pad(util.inspect(elem.data,false,3), 66));
            result += (view !== V_QUICK) ? '\n\n\n' : '\n';
-       }
-       if ((view & V_SHOW_CHLD) && elem.children.head) {
-           result += (view !== V_QUICK) ? '' : _pad('',7);
-           result += 'CHLD :: ' + '\n';
-           chain_walk(elem.children, function(ielem) {
-                result += _pad('.', 5) + elem_info(ielem, 42, (view & V_NO_PAD_TEXT)) + '\n';
-                if (ielem.children.head) {
-                    result += _pad('.', 10) + ' CHLD :: ' + '\n';
-                    chain_walk(ielem.children, function(iielem) {
-                        result += _pad('.', 15) + elem_info(iielem, 34, (view & V_NO_PAD_TEXT)) + '\n';
-                        if (iielem.children.head) result += _pad('.', 20) + 'has-children'
-                    });
-                    if (view !== V_QUICK) result += '\n';
-                };
-           });
        }
     });
 

@@ -1,12 +1,23 @@
---------
-
-1. Test
-2.   Test
-3. Test
-
---------
-
-* Test
 *   * Inner list
-    * Item two in inner list
+    * 2/Innert list
+* Test this:
+    
+    * Inner list
+    * Item two in inner list some lazyness
+
+        Paragraph
+        several lines
+        
+            Verbatim
+
+            { sjjjsjs
+              dddd  
+            }
+
+                Wooo, still verbatim
+
+            OK?
+        
+        Last paragraph
+
 * Third item  

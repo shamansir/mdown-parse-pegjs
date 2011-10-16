@@ -455,7 +455,7 @@ Inlines  =  ( !Endline Inline
               / Endline &Inline )+ 
             Endline? { return _chunk.match }
 
-ListInlines  =  (!('>' / Bullet / Enumerator) LineWithMarkup Endline)+ !BlankLine { 
+ListInlines  =  (OptionalSpace !('>' / Bullet / Enumerator) LineWithMarkup Endline)+ !BlankLine { 
                   console.log('list inlines: {{' + _chunk.match + '}}'); return _chunk.match }                
 
 LineWithMarkup = (Str / UlOrStarLine / Space / Markup)+ {
@@ -480,6 +480,7 @@ Inline  = Str
         / Space
         / Markup
 
+OptionalSpace = Spacechar*
 Space = Spacechar+
 
 Str = NormalChar (NormalChar / '_'+ &Alphanumeric)*

@@ -68,19 +68,6 @@ djjdjd
 
 > Continues here
 
->> 1. An ordered list
->> 2. In two-levelled
->> 4. Blockquote
->> 5. Paragraph
->>
->>    Header
->>    ------
->> 6. He-je
->> 7. * Yep
->>     * It is
->>     * Goo
->>       Goo
-
 1. A list
 2. A list with verbatim
 Long paragraph

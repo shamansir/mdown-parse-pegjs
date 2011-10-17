@@ -1,34 +1,7 @@
-* Lazy
-item
-woo
-woo
-*   
-
-    * Inner list
-Second line
-    * 2/Innert list
-* Test this:
-    
-    * Inner list
-    * Item two in inner list
- some lazyness
-
-        Paragraph
-        several lines
-        
-            Verbatim
-
-            { sjjjsjs
-              dddd  
-            }
-
-                Wooo, still verbatim
-
-            OK?
-        
-        Last paragraph
-
-* Third item 
-
-* * sec-level item
-* first-level-item
+> Heading
+> -------
+>
+>>> * List item 1
+>>> * List item 2
+>>> * list item 3
+>> Level 2

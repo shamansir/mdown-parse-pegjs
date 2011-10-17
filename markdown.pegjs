@@ -132,20 +132,21 @@ BlockQuote = block:/*OneLinersBlockquote / */BlockBasedBlockquote
                       )+
                       { return lines; }*/
 
-BlockBasedBlockquote = w:( l:('>'+ { return _chunk.match } ) ' '?
+BlockBasedBlockquote = !Space s:LocMarker 
+                       w:( l:('>'+ { return _chunk.match } ) ' '+
                            { return l.length } )
-                       s:LocMarker
-                       start:( BlockElm { return _chunk.match } )
-                       BlankLine*
+                       o:LocMarker
                        !{ d.deep = d.deep + 1; }
-                       next:( !'>' ( Verbatim / 
-                                     ( ind:Indents
-                                       &{ return (ind === d.deep); } 
-                                       BlockElm ) )        
-                                   BlankLine*
-                                   { return _chunk.match; } )*
-                       !{ d.deep = d.deep - 1; }              
+                       ( bl:BlankLine* ind:AnyIndent 
+                         &{ return (bl.length == 0) || (ind === d.deep); } )
+                       start:( BlockElm { return _chunk.match; } )
                        BlankLine*
+                       next:( !'>' ( Verbatim /
+                              ( ind:Indents &{ return (ind === d.deep); }
+                                BlockElm ) )
+                              BlankLine*
+                              { return _chunk.match; } )*
+                       !{ d.deep = d.deep - 1; }              
                        { return { 'text': start+next.join(''), 'start': s, 'level': w } }
 
 VerbatimChunk = ( !BlankLine 
@@ -184,8 +185,7 @@ AnyOrderedListItem = OrderedListInlinedItem / OrderedListItem
 
 BulletListItems = data:(
                     AnyBulletListItem
-                    ( ind:PossibleIndents 
-                      &{ return (ind === d.deep); }
+                    ( ind:AnyIndent &{ return (ind === d.deep); }
                       AnyBulletListItem )*
                     BlankLine*
                     { return _chunk.match; } )
@@ -193,8 +193,7 @@ BulletListItems = data:(
 
 OrderedListItems = data:(
                      AnyOrderedListItem
-                     ( ind:PossibleIndents 
-                       &{ return (ind === d.deep); }
+                     ( ind:AnyIndent &{ return (ind === d.deep); }
                        AnyOrderedListItem )* 
                      BlankLine*
                      { return _chunk.match; } )  
@@ -202,8 +201,7 @@ OrderedListItems = data:(
 
 BulletListInlinedItem = !Space s:LocMarker
                         Bullet o:LocMarker
-                        ( bl:BlankLine* 
-                          ind:PossibleIndents 
+                        ( bl:BlankLine* ind:AnyIndent 
                           &{ return (bl.length == 0) || (ind === d.deep); } )
                         i:(ListInlines { return _chunk.match; })
                         !BlankLine
@@ -212,8 +210,7 @@ BulletListInlinedItem = !Space s:LocMarker
 
 OrderedListInlinedItem = !Space s:LocMarker
                          Enumerator o:LocMarker
-                         ( bl:BlankLine* 
-                           ind:PossibleIndents 
+                         ( bl:BlankLine* ind:AnyIndent 
                            &{ return (bl.length == 0) || (ind === d.deep); } )
                          i:(ListInlines { return _chunk.match; })
                          !BlankLine
@@ -221,15 +218,11 @@ OrderedListInlinedItem = !Space s:LocMarker
                            return [s,o,i]; }
 
 // TODO: check verbatim at start of list items (or blank lines before it)
-// FIXME: "Lazy paragraphs" are not correclty parsed in block-indented lists:
-//        try "Item two in inner list" + \n + Indent? + "some lazyness" in 'single-block-test.md'
-// FIXME: in 'progressing.md' some blocks are erroneously parsed as verbatim again :(
 
 BulletListItem = !Space s:LocMarker Bullet
                  o:LocMarker
                  !{ d.deep = d.deep + 1; }
-                 ( bl:BlankLine* 
-                   ind:PossibleIndents 
+                 ( bl:BlankLine* ind:AnyIndent 
                    &{ return (bl.length == 0) || (ind === d.deep); } )
                  start:( BlockElm { return _chunk.match; } )
                  BlankLine*                 
@@ -247,8 +240,7 @@ BulletListItem = !Space s:LocMarker Bullet
 OrderedListItem = !Space s:LocMarker Enumerator
                   o:LocMarker
                   !{ d.deep = d.deep + 1; }
-                  ( bl:BlankLine* 
-                    ind:PossibleIndents
+                  ( bl:BlankLine* ind:AnyIndent
                     &{ return (bl.length == 0) || (ind === d.deep); } )                     
                   start:( BlockElm { return _chunk.match; } )
                   BlankLine*
@@ -686,8 +678,8 @@ CharEntity =    '&' [A-Za-z0-9]+ ';'
 
 NonindentSpace =    "   " / "  " / " " / ""
 Indent =            "\t" / "    "
-PossibleIndents =   ind:Indent* { return ind.length; } 
 Indents =           ind:Indent+ { return ind.length; }
+AnyIndent =         ind:Indent* { return ind.length; }
 IndentedLine =      Indent txt:Line { return txt }
 OptionallyIndentedLine = Indent? txt:Line { return txt }
 

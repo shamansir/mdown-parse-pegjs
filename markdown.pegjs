@@ -183,47 +183,41 @@ AnyBulletListItem = BulletListInlinedItem / BulletListItem
 AnyOrderedListItem = OrderedListInlinedItem / OrderedListItem
 
 BulletListItems = data:(
-                    (AnyBulletListItem { console.log('bl-first-item: <<' + _chunk.match + '>>'); })
-                    !{ console.log('bl-first-passed'); }
+                    AnyBulletListItem
                     ( ind:PossibleIndents 
-                      &{ console.log('bl-indents ' + ind + '/' + d.deep);
-                         return (ind === d.deep); }
-                       (AnyBulletListItem { console.log('bl-next-item: <<' + _chunk.match + '>>'); })
-                      !{ console.log('bl-next-passed'); } )*
+                      &{ return (ind === d.deep); }
+                      AnyBulletListItem )*
                     BlankLine*
-                    !{ console.log('bl-list-passed'); }
-                    { return _chunk.match; } )  
+                    { return _chunk.match; } )
                   { return data; }
 
 OrderedListItems = data:(
-                     (AnyOrderedListItem { console.log('ol-first-item: <<' + _chunk.match + '>>'); })
-                     !{ console.log('ol-first-passed'); }
+                     AnyOrderedListItem
                      ( ind:PossibleIndents 
-                       &{ console.log('ol-indents ' + ind + '/' + d.deep);
-                          return (ind === d.deep); }
-                       (AnyOrderedListItem { console.log('ol-next-item: <<' + _chunk.match + '>>'); })
-                       !{ console.log('ol-next-passed'); } )* 
+                       &{ return (ind === d.deep); }
+                       AnyOrderedListItem )* 
                      BlankLine*
-                     !{ console.log('ol-list-passed'); }
                      { return _chunk.match; } )  
                    { return data; }             
 
 BulletListInlinedItem = !Space s:LocMarker
                         Bullet o:LocMarker
-                        BlankLine* (ind:PossibleIndents { return (ind === d.deep); })
-                        i:(ListInlines { return _chunk.match; } )
+                        ( bl:BlankLine* 
+                          ind:PossibleIndents 
+                          &{ return (bl.length == 0) || (ind === d.deep); } )
+                        i:(ListInlines { return _chunk.match; })
                         !BlankLine
-                        { console.log('bl-inlined-item: <<' + _chunk.match + '>>');
-                          d.add(d.elem_c(t.pmd_LIST_BULLET_ITEM,_chunk));
+                        { d.add(d.elem_c(t.pmd_LIST_BULLET_ITEM,_chunk));
                           return [s,o,i]; }
 
 OrderedListInlinedItem = !Space s:LocMarker
                          Enumerator o:LocMarker
-                         BlankLine* (ind:PossibleIndents { return (ind === d.deep); })
-                         i:(ListInlines { return _chunk.match; } )
+                         ( bl:BlankLine* 
+                           ind:PossibleIndents 
+                           &{ return (bl.length == 0) || (ind === d.deep); } )
+                         i:(ListInlines { return _chunk.match; })
                          !BlankLine
-                         { console.log('ol-inlined-item: <<' + _chunk.match + '>>');
-                           d.add(d.elem_c(t.pmd_LIST_ENUM_ITEM,_chunk));
+                         { d.add(d.elem_c(t.pmd_LIST_ENUM_ITEM,_chunk));
                            return [s,o,i]; }
 
 // TODO: check verbatim at start of list items (or blank lines before it)
@@ -232,54 +226,40 @@ OrderedListInlinedItem = !Space s:LocMarker
 // FIXME: in 'progressing.md' some blocks are erroneously parsed as verbatim again :(
 
 BulletListItem = !Space s:LocMarker Bullet
-                 !{ console.log('bl-block-item-start'); }
                  o:LocMarker
-                 !{ d.deep = d.deep + 1;
-                    console.log('bl-list: deep -> ' + d.deep); }
-                 (bl:BlankLine* ind:PossibleIndents 
-                              &{ console.log('bl-start-block-indents ' + bl.length + '/' + ind + '/' + d.deep); 
-                                 return (bl.length == 0) || (ind === d.deep); })
+                 !{ d.deep = d.deep + 1; }
+                 ( bl:BlankLine* 
+                   ind:PossibleIndents 
+                   &{ return (bl.length == 0) || (ind === d.deep); } )
                  start:( BlockElm { return _chunk.match; } )
                  BlankLine*                 
                  next:( !(Bullet / Enumerator)
                         ( Verbatim /
-                          ( ind:Indents
-                            &{  console.log('bl-block-indents ' + ind + '/' + d.deep);
-                                return (ind === d.deep); }
+                          ( ind:Indents &{ return (ind === d.deep); }
                             BlockElm ) )
                         BlankLine*
                         { return _chunk.match; } )*
-                 !{ d.deep = d.deep - 1;
-                    console.log('bl-list: ' + d.deep + ' <- deep'); }
-                 { console.log('bl-block-item: <<' + _chunk.match + '>>');
-                   d.add(d.elem_c(t.pmd_LIST_BULLET_ITEM,_chunk));
+                 !{ d.deep = d.deep - 1; }
+                 { d.add(d.elem_c(t.pmd_LIST_BULLET_ITEM,_chunk));
                    return [s,(o-s),start+next.join(''),
                                    _chunk.match.substring(o-s)]; }                   
 
 OrderedListItem = !Space s:LocMarker Enumerator
-                  !{ console.log('ol-block-item-start'); }
                   o:LocMarker
-                  !{ d.deep = d.deep + 1;
-                     console.log('ol-list: deep -> ' + d.deep); }
-                  (bl:BlankLine* ind:PossibleIndents
-                              &{ console.log('ol-start-block-indents ' + bl.length + '/' + ind + '/' + d.deep); 
-                                 return (bl.length == 0) || (ind === d.deep); })                     
-                  start:( BlockElm { console.log('ol-block-item-start:' + _chunk.match);
-                                     return _chunk.match; } )
+                  !{ d.deep = d.deep + 1; }
+                  ( bl:BlankLine* 
+                    ind:PossibleIndents
+                    &{ return (bl.length == 0) || (ind === d.deep); } )                     
+                  start:( BlockElm { return _chunk.match; } )
                   BlankLine*
                   next:( !(Bullet / Enumerator)
                          ( Verbatim / 
-                           ( ind:Indents
-                             &{ console.log('ol-block-indents ' + ind + '/' + d.deep);
-                                return (ind === d.deep); }
-                             b:BlockElm 
-                             { console.log('block: ' + b); return _chunk.match; } ) )
+                           ( ind:Indents &{ return (ind === d.deep); }
+                             BlockElm ) )
                          BlankLine*
                          { return _chunk.match; } )*
-                  !{ d.deep = d.deep - 1;
-                     console.log('ol-list: ' + d.deep + ' <- deep'); }
-                  { console.log('ol-block-item: <<' + _chunk.match + '>>');
-                    d.add(d.elem_c(t.pmd_LIST_ENUM_ITEM,_chunk));
+                  !{ d.deep = d.deep - 1; }
+                  { d.add(d.elem_c(t.pmd_LIST_ENUM_ITEM,_chunk));
                     return [s,(o-s),start+next.join(''),
                                     _chunk.match.substring(o-s)]; }
 
@@ -485,12 +465,9 @@ Inlines  =  ( !Endline Inline
               / Endline &Inline )+ 
             Endline? { return _chunk.match }
 
-ListInlines  =  !{ console.log('> start-inlines'); }
-                ( !{ console.log('>> new line'); }
-                  (!BlankLine Sp { console.log('>>> sp match: {{' + _chunk.match + '}}'); })
+ListInlines  =  ( !BlankLine Sp
                   !('>' / Bullet / Enumerator) 
-                  (LineWithMarkup { console.log('>>> markup match: {{' + _chunk.match + '}}'); })
-                  (Newline { console.log('>>> endline match: {{' + _chunk.match + '}}'); })
+                  LineWithMarkup Newline
                 )+ 
                 { return _chunk.match }                
 
@@ -709,7 +686,7 @@ CharEntity =    '&' [A-Za-z0-9]+ ';'
 
 NonindentSpace =    "   " / "  " / " " / ""
 Indent =            "\t" / "    "
-PossibleIndents =   ind:Indent* { console.log('<<' + _chunk.match + '>> :: ' + ind.length); return ind.length; } 
+PossibleIndents =   ind:Indent* { return ind.length; } 
 Indents =           ind:Indent+ { return ind.length; }
 IndentedLine =      Indent txt:Line { return txt }
 OptionallyIndentedLine = Indent? txt:Line { return txt }

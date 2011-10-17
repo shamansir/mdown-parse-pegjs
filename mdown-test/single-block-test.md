@@ -10,7 +10,8 @@ Second line
 * Test this:
     
     * Inner list
-    * Item two in inner list some lazyness
+    * Item two in inner list
+ some lazyness
 
         Paragraph
         several lines
@@ -29,6 +30,5 @@ Second line
 
 * Third item 
 
-* 
-    * sec-level item
+* * sec-level item
 * first-level-item

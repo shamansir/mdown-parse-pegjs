@@ -183,12 +183,12 @@ AnyBulletListItem = BulletListInlinedItem / BulletListItem
 AnyOrderedListItem = OrderedListInlinedItem / OrderedListItem
 
 BulletListItems = data:(
-                    AnyBulletListItem
+                    (AnyBulletListItem { console.log('bl-first-item: <<' + _chunk.match + '>>'); })
                     !{ console.log('bl-first-passed'); }
                     ( ind:PossibleIndents 
                       &{ console.log('bl-indents ' + ind + '/' + d.deep);
                          return (ind === d.deep); }
-                      AnyBulletListItem
+                       (AnyBulletListItem { console.log('bl-next-item: <<' + _chunk.match + '>>'); })
                       !{ console.log('bl-next-passed'); } )*
                     BlankLine*
                     !{ console.log('bl-list-passed'); }
@@ -196,12 +196,12 @@ BulletListItems = data:(
                   { return data; }
 
 OrderedListItems = data:(
-                     AnyOrderedListItem
+                     (AnyOrderedListItem { console.log('ol-first-item: <<' + _chunk.match + '>>'); })
                      !{ console.log('ol-first-passed'); }
                      ( ind:PossibleIndents 
                        &{ console.log('ol-indents ' + ind + '/' + d.deep);
                           return (ind === d.deep); }
-                       AnyOrderedListItem
+                       (AnyOrderedListItem { console.log('ol-next-item: <<' + _chunk.match + '>>'); })
                        !{ console.log('ol-next-passed'); } )* 
                      BlankLine*
                      !{ console.log('ol-list-passed'); }
@@ -210,14 +210,18 @@ OrderedListItems = data:(
 
 BulletListInlinedItem = !Space s:LocMarker
                         Bullet o:LocMarker
+                        BlankLine* (ind:Indent* { return (ind.length === d.deep); })
                         i:(ListInlines { return _chunk.match; } )
+                        !BlankLine
                         { console.log('bl-inlined-item: <<' + _chunk.match + '>>');
                           d.add(d.elem_c(t.pmd_LIST_BULLET_ITEM,_chunk));
                           return [s,o,i]; }
 
 OrderedListInlinedItem = !Space s:LocMarker
                          Enumerator o:LocMarker
+                         BlankLine* (ind:Indent* { return (ind.length === d.deep); })
                          i:(ListInlines { return _chunk.match; } )
+                         !BlankLine
                          { console.log('ol-inlined-item: <<' + _chunk.match + '>>');
                            d.add(d.elem_c(t.pmd_LIST_ENUM_ITEM,_chunk));
                            return [s,o,i]; }
@@ -475,7 +479,13 @@ Inlines  =  ( !Endline Inline
               / Endline &Inline )+ 
             Endline? { return _chunk.match }
 
-ListInlines  =  (OptionalSpace !('>' / Bullet / Enumerator) LineWithMarkup Endline)+ !BlankLine 
+ListInlines  =  !{ console.log('> start-inlines'); }
+                ( !{ console.log('>> new line'); }
+                  (Sp { console.log('>>> sp match: {{' + _chunk.match + '}}'); })
+                  !('>' / Bullet / Enumerator) 
+                  (LineWithMarkup { console.log('>>> markup match: {{' + _chunk.match + '}}'); })
+                  (Newline { console.log('>>> endline match: {{' + _chunk.match + '}}'); })
+                )+ 
                 { return _chunk.match }                
 
 LineWithMarkup = (Str / UlOrStarLine / Space / Markup)+
@@ -498,7 +508,6 @@ Inline  = Str
         / Space
         / Markup
 
-OptionalSpace = Spacechar*
 Space = Spacechar+
 
 Str = NormalChar (NormalChar / '_'+ &Alphanumeric)*

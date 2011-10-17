@@ -210,7 +210,7 @@ OrderedListItems = data:(
 
 BulletListInlinedItem = !Space s:LocMarker
                         Bullet o:LocMarker
-                        BlankLine* (ind:Indent* { return (ind.length === d.deep); })
+                        BlankLine* (ind:PossibleIndents { return (ind === d.deep); })
                         i:(ListInlines { return _chunk.match; } )
                         !BlankLine
                         { console.log('bl-inlined-item: <<' + _chunk.match + '>>');
@@ -219,7 +219,7 @@ BulletListInlinedItem = !Space s:LocMarker
 
 OrderedListInlinedItem = !Space s:LocMarker
                          Enumerator o:LocMarker
-                         BlankLine* (ind:Indent* { return (ind.length === d.deep); })
+                         BlankLine* (ind:PossibleIndents { return (ind === d.deep); })
                          i:(ListInlines { return _chunk.match; } )
                          !BlankLine
                          { console.log('ol-inlined-item: <<' + _chunk.match + '>>');
@@ -236,7 +236,9 @@ BulletListItem = !Space s:LocMarker Bullet
                  o:LocMarker
                  !{ d.deep = d.deep + 1;
                     console.log('bl-list: deep -> ' + d.deep); }
-                 BlankLine* (ind:Indent* { return (ind.length === d.deep); })
+                 (bl:BlankLine* ind:PossibleIndents 
+                              &{ console.log('bl-start-block-indents ' + bl.length + '/' + ind + '/' + d.deep); 
+                                 return (bl.length == 0) || (ind === d.deep); })
                  start:( BlockElm { return _chunk.match; } )
                  BlankLine*                 
                  next:( !(Bullet / Enumerator)
@@ -259,15 +261,19 @@ OrderedListItem = !Space s:LocMarker Enumerator
                   o:LocMarker
                   !{ d.deep = d.deep + 1;
                      console.log('ol-list: deep -> ' + d.deep); }
-                  start:( BlockElm { return _chunk.match; } )
-                  BlankLine* (ind:Indent* { return (ind.length === d.deep); })
+                  (bl:BlankLine* ind:PossibleIndents
+                              &{ console.log('ol-start-block-indents ' + bl.length + '/' + ind + '/' + d.deep); 
+                                 return (bl.length == 0) || (ind === d.deep); })                     
+                  start:( BlockElm { console.log('ol-block-item-start:' + _chunk.match);
+                                     return _chunk.match; } )
                   BlankLine*
                   next:( !(Bullet / Enumerator)
                          ( Verbatim / 
                            ( ind:Indents
                              &{ console.log('ol-block-indents ' + ind + '/' + d.deep);
                                 return (ind === d.deep); }
-                             BlockElm ) )
+                             b:BlockElm 
+                             { console.log('block: ' + b); return _chunk.match; } ) )
                          BlankLine*
                          { return _chunk.match; } )*
                   !{ d.deep = d.deep - 1;
@@ -481,7 +487,7 @@ Inlines  =  ( !Endline Inline
 
 ListInlines  =  !{ console.log('> start-inlines'); }
                 ( !{ console.log('>> new line'); }
-                  (Sp { console.log('>>> sp match: {{' + _chunk.match + '}}'); })
+                  (!BlankLine Sp { console.log('>>> sp match: {{' + _chunk.match + '}}'); })
                   !('>' / Bullet / Enumerator) 
                   (LineWithMarkup { console.log('>>> markup match: {{' + _chunk.match + '}}'); })
                   (Newline { console.log('>>> endline match: {{' + _chunk.match + '}}'); })
@@ -703,7 +709,7 @@ CharEntity =    '&' [A-Za-z0-9]+ ';'
 
 NonindentSpace =    "   " / "  " / " " / ""
 Indent =            "\t" / "    "
-PossibleIndents =   ind:Indent* { return ind.length; } 
+PossibleIndents =   ind:Indent* { console.log('<<' + _chunk.match + '>> :: ' + ind.length); return ind.length; } 
 Indents =           ind:Indent+ { return ind.length; }
 IndentedLine =      Indent txt:Line { return txt }
 OptionallyIndentedLine = Indent? txt:Line { return txt }

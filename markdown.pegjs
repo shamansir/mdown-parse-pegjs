@@ -117,20 +117,20 @@ SetextHeading2 =  &(RawLine SetextBottom2)
 
 Heading = SetextHeading / AtxHeading { return t.pmd_H1; }
 
-BlockQuote = block:/*OneLinersBlockquote / */BlockBasedBlockquote
-             { d.add(d.elem_ct(t.pmd_BLOCKQUOTE,_chunk,block.text),block);
-               return t.pmd_BLOCKQUOTE; }
+BlockQuote = OneLinersBlockquote / BlockBasedBlockquote
+             { return t.pmd_BLOCKQUOTE; }
 
-/*OneLinersBlockquote = lines:(
+OneLinersBlockquote = lines:(
                          w:( l:('>'+ { return _chunk.match } ) ' '? { return l.length } )
                          s:LocMarker
                          start:( Line { return _chunk.match } )
                          next:( !'>' !BlankLine Line { return _chunk.match } )*
-                         stop:( BlankLine { return '\n' } )*
-                         { return { 'text': start+next.join('')+stop, 'start': s,
+                         ((BlankLine !Indent) / !BlankLine) 
+                         { return { 'text': start+next.join(''), 'start': s,
                                     'level': w } }
                       )+
-                      { return lines; }*/
+                      { d.add(d.elem_ct(t.pmd_BQRAW,_chunk,lines.text),lines);
+                        return lines; }
 
 BlockBasedBlockquote = !Space s:LocMarker 
                        w:( l:('>'+ { return _chunk.match } ) ' '+
@@ -147,7 +147,9 @@ BlockBasedBlockquote = !Space s:LocMarker
                               BlankLine*
                               { return _chunk.match; } )*
                        !{ d.deep = d.deep - 1; }              
-                       { return { 'text': start+next.join(''), 'start': s, 'level': w } }
+                       { var data = { 'text': start+next.join(''), 'start': s, 'level': w };
+                         d.add(d.elem_ct(t.pmd_BLOCKQUOTE,_chunk,data.text),data);
+                       }
 
 VerbatimChunk = ( !BlankLine 
                   ind:Indents &{ return (ind > d.deep); }  

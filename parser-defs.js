@@ -43,11 +43,11 @@ t.pmd_LIST_ENUM_ITEM   = 26; /**< Item of Enumerator list */
 
 // Span marker for positions in original input to be post-processed
 // in a second parsing step:
-t.pmd_RAW             = 27;   /**< Internal to parser. Please ignore. */
+t.pmd_BQRAW             = 27;   /**< Internal to parser. Please ignore. */
 
 t.type_name = function(type) {
     switch (type) {
-        case t.pmd_RAW:                return "RAW";
+        case t.pmd_BQRAW:              return "BQRAW";
 
         case t.pmd_PARA:               return "PARA";
         case t.pmd_LINK:               return "LINK";
@@ -476,12 +476,12 @@ function release_waiters(state) {
 // =============================================================================
 // SPECIAL =====================================================================
 
-function parse_row(data) {
+function parse_raw(data) {
     
 }
 
 function parse_block_elems(state) {
-    var raws = state.elems[t.pmd_BLOCKQUOTE];
+    var raws = state.elems[t.pmd_BQRAW];
     for (var idx = 0; idx < raws.length; idx++) {
         parse_raw(raws[idx].data);
     }

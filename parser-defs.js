@@ -477,7 +477,25 @@ function release_waiters(state) {
 // SPECIAL =====================================================================
 
 function parse_raw(data) {
-    
+    console.log('~( ' + util.inspect(data,false,3) + ' )~');
+    var chunks = [];
+    var positions = [];
+    var lvl, clen, st;
+    for (var i = 0; i < data.length; i++) {
+        lvl = data[i].level - 1;
+        clen = data[i].text.length;
+        st = data[i].start;
+        if (chunks[lvl] === undefined) chunks[lvl] = [];
+        //console.log('lvl ' + lvl + ', pushing { ' + data[i].text + ' }');
+        chunks[lvl].push(data[i].text);
+        var posarr = [];
+        for (var j = 0; j < clen; j++) {
+            posarr[j] = st + j;
+        }
+        positions.push(posarr);
+    }
+    console.log('{{ ' + util.inspect(chunks,false,3) + ' }}');
+    console.log('{{ ' + util.inspect(positions,false,4) + ' }}');
 }
 
 function parse_block_elems(state) {
@@ -500,7 +518,7 @@ function after(state) {
     // things to do after parsing
     release_waiters(state);
     //console.log($_parser);
-    //parse_block_elems(state);
+    parse_block_elems(state);
 }
 
 // =============================================================================

@@ -477,25 +477,43 @@ function release_waiters(state) {
 // SPECIAL =====================================================================
 
 function parse_raw(data) {
+    if (data.length === 0) return;
+    //console.log($_parser);
     console.log('~( ' + util.inspect(data,false,3) + ' )~');
-    var chunks = [];
-    var positions = [];
-    var lvl, clen, st;
+    var bquotes = []; // contains strings with joined chunks, grouped by same level
+    var positions = []; // contains arrays of actual positions, for each character
+        // so (bquotes[i].length === positions[i].length)
+        // where i is index of the current bquote, bquotes[i] is a string containing
+        // the text of bquote where each linehad the same level [before processing],
+        // and positions[i] is array of integers, where each positions[i][j]-integer 
+        // corresponds to the actual position of the bqoutes[i][j]-character 
+    var bqidx = 0; // bqoute index
+    var plvl = 0; // previous level
+    var nlvl, clen, st; // new level, chunk length, chunk start 
     for (var i = 0; i < data.length; i++) {
-        lvl = data[i].level - 1;
-        clen = data[i].text.length;
-        st = data[i].start;
-        if (chunks[lvl] === undefined) chunks[lvl] = [];
-        //console.log('lvl ' + lvl + ', pushing { ' + data[i].text + ' }');
-        chunks[lvl].push(data[i].text);
-        var posarr = [];
+        nlvl = data[i].level - 1;
+        if (nlvl !== plvl) {
+            bqidx++; // switch to next bquote if level changed
+            plvl = nlvl; // save new level as previous
+        }
+        clen = data[i].text.length; // length of current chunk
+        st = data[i].start; // current chunk start position
+        if (bquotes[bqidx] === undefined) bquotes[bqidx] = ""; // init with empty string
+        if (positions[bqidx] === undefined) positions[bqidx] = []; // init with empty array
+        console.log('bquidx ' + bqidx + ', pushing { ' + data[i].text + ' } (was: {' + bquotes[bqidx] + '})');
+        // concat current text with new chunk text
+        bquotes[bqidx] = bquotes[bqidx].concat(data[i].text); 
+        var posarr = []; // collect actual positions in array
         for (var j = 0; j < clen; j++) {
             posarr[j] = st + j;
         }
-        positions.push(posarr);
+        // concat current positions array with new positions array
+        positions[bqidx] = positions[bqidx].concat(posarr);
+        if (bquotes[bqidx].length !== positions[bqidx].length) 
+           { console.warn('lengths not matched'); }
     }
-    console.log('{{ ' + util.inspect(chunks,false,3) + ' }}');
-    console.log('{{ ' + util.inspect(positions,false,4) + ' }}');
+    //console.log('{{ ' + util.inspect(bquotes,false,5) + ' }}');
+    //console.log('{{ ' + util.inspect(positions,false,5) + ' }}');
 }
 
 function parse_block_elems(state) {

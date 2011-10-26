@@ -476,10 +476,13 @@ function release_waiters(state) {
 // =============================================================================
 // SPECIAL =====================================================================
 
-function parse_raw(data) {
+function parse_raw(state, data) {
     if (data.length === 0) return;
+
     //console.log($_parser);
-    console.log('~( ' + util.inspect(data,false,3) + ' )~');
+    //console.log('~( ' + util.inspect(data,false,3) + ' )~');
+
+    // COLLECTING / PACKING DATA
     var bquotes = []; // contains strings with joined chunks, grouped by same level
     var positions = []; // contains arrays of actual positions, for each character
         // so (bquotes[i].length === positions[i].length)
@@ -500,7 +503,6 @@ function parse_raw(data) {
         st = data[i].start; // current chunk start position
         if (bquotes[bqidx] === undefined) bquotes[bqidx] = ""; // init with empty string
         if (positions[bqidx] === undefined) positions[bqidx] = []; // init with empty array
-        console.log('bquidx ' + bqidx + ', pushing { ' + data[i].text + ' } (was: {' + bquotes[bqidx] + '})');
         // concat current text with new chunk text
         bquotes[bqidx] = bquotes[bqidx].concat(data[i].text); 
         var posarr = []; // collect actual positions in array
@@ -510,16 +512,41 @@ function parse_raw(data) {
         // concat current positions array with new positions array
         positions[bqidx] = positions[bqidx].concat(posarr);
         if (bquotes[bqidx].length !== positions[bqidx].length) 
-           { console.warn('lengths not matched'); }
+           { throw new Error('lengths not matched, this should not happened!'); }
+    }
+
+    console.log('PARSING TIME!');
+
+    // PARSING TIME!
+    var parsed;
+    for (var i = 0; i < bquotes.length; i++) {
+        console.log('parsing ' + i + ' (' + bquotes[i] + ')');
+        parsed = $_parser.parse(bquotes[i]);
+        console.log('parsed: ' + util.inspect(parsed.chain,false,5));
+        chain_travel(parsed.chain, function(elem) {
+            console.log('adding ' + make_element_i(state, elem.type,
+                                       positions[i][elem.pos],
+                                       positions[i][elem.end],
+                                       elem.text));
+            add_element(state,
+                        make_element_i(state, elem.type,
+                                       positions[i][elem.pos],
+                                       positions[i][elem.end],
+                                       elem.text),
+                        elem.data);
+        });
     }
     //console.log('{{ ' + util.inspect(bquotes,false,5) + ' }}');
     //console.log('{{ ' + util.inspect(positions,false,5) + ' }}');
 }
 
 function parse_block_elems(state) {
+    if (!$_parser) { throw new Error('No parser accessible, please define global $_parser ' +
+                                     'variable to be equal to current parser'); }
+                                     // FIXME: store parser var inside somehow
     var raws = state.elems[t.pmd_BQRAW];
     for (var idx = 0; idx < raws.length; idx++) {
-        parse_raw(raws[idx].data);
+        parse_raw(state, raws[idx].data);
     }
 }
 

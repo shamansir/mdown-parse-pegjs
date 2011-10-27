@@ -4,6 +4,8 @@
 
 var util = require('util');
 
+var cur_state = null;
+
 // =============================================================================
 // ELEMENTS TYPES ==============================================================
 
@@ -182,20 +184,26 @@ function _pad(str, num) {
 // =============================================================================
 // STATE =======================================================================
 
-var g_state = {
-    'chain': { 'head': null, 'tail': null }, // dbl-linked list of elements
-    'extensions': e.pmd_EXTENSIONS, // enabled extensions
-    'elems': [], // elements, indexed by type (int)
-    'refs': {}, // references map (label: element)
-    '_cur': null, // last processed element
-    '_rwaiters': {} // waiters for references, map (label: array of func)
-};
+function make_state() {
+    return {
+        'chain': { 'head': null, 'tail': null }, // dbl-linked list of elements
+        'extensions': e.pmd_EXTENSIONS, // enabled extensions
+        'elems': [], /*new Array(t.pmd_NUM_TYPES)*/ // elements, indexed by type (int)
+        'refs': {}, // references map (label: element)
+        '_cur': null, // last processed element
+        '_rwaiters': {}, // waiters for references, map (label: array of func)
+        'info': function(view) { return state_info(this, view); }, // FIXME: make global funcs
+        'toString': function() { return state_info(this); } // FIXME: make global funcs
+    }
+}
 
-g_state.elems = new Array(t.pmd_NUM_TYPES);
+function work_with(state) {
+    cur_state = state;
+}
 
-g_state.info = function(view) { return state_info(this, view); }
-
-g_state.toString = function() { return state_info(this); }
+function get_state() {
+    return cur_state;
+}
 
 // TODO: a function that will add node type markers to the text using state refs
 /* g_state.spec(text) {
@@ -330,7 +338,7 @@ function chain_insert(chain, elem, deep) {
     } else if (elem.end <= at_right.end) { // check if it fits as child
         chain_insert(at_right.children, elem, deep + 1);
     } else {
-        throw new Error(pref + 'No place found for elm ' + elem);
+        throw new Error('No place found for elm: ' + elem);
     }
 
 }
@@ -479,7 +487,6 @@ function release_waiters(state) {
 function parse_raw(state, data) {
     if (data.length === 0) return;
 
-    //console.log($_parser);
     //console.log('~( ' + util.inspect(data,false,3) + ' )~');
 
     // COLLECTING / PACKING DATA
@@ -536,8 +543,9 @@ function parse_raw(state, data) {
                         elem.data);
         });
     }
-    //console.log('{{ ' + util.inspect(bquotes,false,5) + ' }}');
-    //console.log('{{ ' + util.inspect(positions,false,5) + ' }}');
+    console.log('{{ ' + util.inspect(bquotes,false,5) + ' }}');
+    console.log('{{ ' + util.inspect(positions,false,5) + ' }}');
+
 }
 
 function parse_block_elems(state) {
@@ -545,6 +553,7 @@ function parse_block_elems(state) {
                                      'variable to be equal to current parser'); }
                                      // FIXME: store parser var inside somehow
     var raws = state.elems[t.pmd_BQRAW];
+    if (raws === undefined) return;
     for (var idx = 0; idx < raws.length; idx++) {
         parse_raw(state, raws[idx].data);
     }
@@ -556,35 +565,35 @@ function parse_block_elems(state) {
 /* executed before parsing */
 function before(state) {
     // things to do before parsing
+    state.deep = 0;
 }
 
 /* executed after parsing */
 function after(state) {
     // things to do after parsing
     release_waiters(state);
-    //console.log($_parser);
     parse_block_elems(state);
 }
 
 // =============================================================================
 // ALIAS =======================================================================
 
-function elem(x,c)         { return make_element(g_state,x,c) } // type and chunk
-function elem_c(x,c)       { return make_element_i(g_state,x,c.pos,c.end,c.match) } // type, chunk (pos,end,text)
-function elem_cz(x,c)      { return make_element_i(g_state,x,c.pos,c.end) } // type, chunk (pos,end), no text
-function elem_ct(x,c,t)    { return make_element_i(g_state,x,c.pos,c.end,t) } // type, chunk (pos,end) and text
-function elem_cn(x,c,n)    { return make_element_i(g_state,x,c.pos,c.end,c.match.substring(n,c.match.length-n)) } // type, chunk (pos,end) and padding
-function elem_pe(x,p,e)    { return make_element_i(g_state,x,p,e) } // type, pos, end (no text)
-function elem_pet(x,p,e,t) { return make_element_i(g_state,x,p,e,t) } // type, pos, end, text
-function elem_z(x)         { return make_element_i(g_state,x,0,0) } // type only
-function add(x,d)          { return add_element(g_state,x,d) } // x is element, d (data) is optional
-function ext(x)            { return extension(g_state,x) }
-function ref_exists(x)     { return (get_reference(g_state,x) != null) }
-function save_ref(x,e)     { return save_reference(g_state,x,e) }
-function get_ref(x)        { return get_reference(g_state,x) }
-function wait_ref(x,f)     { return wait_reference(g_state,x,f) }
-function start()           { return before(g_state) }
-function end()             { return after(g_state) }
+function elem(x,c)         { return make_element(cur_state,x,c) } // type and chunk
+function elem_c(x,c)       { return make_element_i(cur_state,x,c.pos,c.end,c.match) } // type, chunk (pos,end,text)
+function elem_cz(x,c)      { return make_element_i(cur_state,x,c.pos,c.end) } // type, chunk (pos,end), no text
+function elem_ct(x,c,t)    { return make_element_i(cur_state,x,c.pos,c.end,t) } // type, chunk (pos,end) and text
+function elem_cn(x,c,n)    { return make_element_i(cur_state,x,c.pos,c.end,c.match.substring(n,c.match.length-n)) } // type, chunk (pos,end) and padding
+function elem_pe(x,p,e)    { return make_element_i(cur_state,x,p,e) } // type, pos, end (no text)
+function elem_pet(x,p,e,t) { return make_element_i(cur_state,x,p,e,t) } // type, pos, end, text
+function elem_z(x)         { return make_element_i(cur_state,x,0,0) } // type only
+function add(x,d)          { return add_element(cur_state,x,d) } // x is element, d (data) is optional
+function ext(x)            { return extension(cur_state,x) }
+function ref_exists(x)     { return (get_reference(cur_state,x) != null) }
+function save_ref(x,e)     { return save_reference(cur_state,x,e) }
+function get_ref(x)        { return get_reference(cur_state,x) }
+function wait_ref(x,f)     { return wait_reference(cur_state,x,f) }
+function start()           { return before(cur_state) }
+function end()             { return after(cur_state) }
 
 // =============================================================================
 // EXPORT ======================================================================
@@ -609,7 +618,9 @@ module.exports = {
     'start': start,
     'end': end,
 
-    'state': g_state,
+    'make_state': make_state,
+    'work_with': work_with,
+    'get_state': get_state,
 
     'types': t,
     'exts': e,

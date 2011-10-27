@@ -25,35 +25,18 @@
 {
 
     var d = require(process.cwd() + '/parser-defs');
+    var s = d.make_state();
     var e = d.exts;
     var t = d.types;
 
-    function packListData(start, cont) {
-        for (var i = 0, result = [start]; i < cont.length; i++) {
-            for (var j = 0; j < cont[i].length; j++) {
-                result.push(cont[i][j]);
-        }   }
-        return result;
-    }
-
-    function extractListText(data) {
-        for (var i = 0, text = ''; i < data.length; i++) {
-            for (var j = 0, src = data[i][2]; j < src.length; j++) {
-                for (var k = 0; k < src[j].length; k++) {
-                    text += src[j][k];
-        }   }   }
-        return text;
-    }
-
+    d.work_with(s);
     d.start();
-
-    d.deep = 0; // TODO: move to before(state)
 
     // TODO: _chunk.match is not required for parsers, remove element text?
 
 }
 
-start =     Doc { d.end(); return d.state; }
+start =     Doc { d.end(); return d.get_state(); }
 
 Doc =       ( Block )*
 

@@ -164,10 +164,6 @@ OrderedList = &Enumerator data:OrderedListItems
               { d.add(d.elem_ct(t.pmd_LIST_ENUMERATOR,_chunk,_chunk.match),data);
                 return t.pmd_LIST_ENUMERATOR; }
 
-AnyBulletListItem = BulletListInlinedItem / BulletListItem
-
-AnyOrderedListItem = OrderedListInlinedItem / OrderedListItem
-
 BulletListItems = data:(
                     AnyBulletListItem
                     ( ind:AnyIndent &{ return (ind === d.deep); }
@@ -182,7 +178,11 @@ OrderedListItems = data:(
                        AnyOrderedListItem )* 
                      BlankLine*
                      { return _chunk.match; } )  
-                   { return data; }             
+                   { return data; }                
+
+AnyBulletListItem = BulletListInlinedItem / BulletListItem
+
+AnyOrderedListItem = OrderedListInlinedItem / OrderedListItem             
 
 BulletListInlinedItem = !Space s:LocMarker
                         Bullet o:LocMarker

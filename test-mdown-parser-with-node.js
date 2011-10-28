@@ -17,7 +17,7 @@ try {
     var result = parser.parse(testContent);
     console.log('=====');
     console.log('result:',
-        result.info(0
+        result.info(1 + 2 + 4
            // V_SHOW_DATA(1) | V_NO_STRIP_DATA(2) | V_NO_PAD_TEXT(4)
         ));
 } catch(e) {

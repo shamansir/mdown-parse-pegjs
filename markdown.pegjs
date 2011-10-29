@@ -25,7 +25,8 @@
 {
 
     var d = require(process.cwd() + '/parser-defs');
-    var s = d.make_state();
+    var w = d.get_state(); // save previous state
+    var s = d.make_state(); // and make new
     var e = d.exts;
     var t = d.types;
 
@@ -36,7 +37,10 @@
 
 }
 
-start =     Doc { d.end(); return d.get_state(); }
+start =     Doc { d.end(); 
+                  var cur = d.get_state();
+                  d.work_with(w); // enable previous state
+                  return cur; }
 
 Doc =       ( Block )*
 

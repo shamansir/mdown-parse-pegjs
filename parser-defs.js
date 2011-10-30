@@ -487,6 +487,8 @@ function release_waiters(state) {
 function parse_raw(state, data) {
     if (data.length === 0) return;
 
+    // TODO: wrap blockquote of each level with additional element
+
     // COLLECTING / PACKING DATA
     var bquotes = []; // contains strings with joined chunks, grouped by same level
     var positions = []; // contains arrays of actual positions, for each character

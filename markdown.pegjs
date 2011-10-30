@@ -27,8 +27,8 @@
     var d = require(process.cwd() + '/parser-defs');
     var w = d.get_state(); // save previous state
     var s = d.make_state(); // and make new
-    var e = d.exts;
-    var t = d.types;
+    var e = d.exts; // extensions codes
+    var t = d.types; // types codes
 
     d.work_with(s);
     d.start();
@@ -66,7 +66,7 @@ Block =     BlankLine*
 
 Para =      NonindentSpace 
             txt:Inlines 
-            BlankLine+
+            (BlankLine+ / Eof)
             { d.add(d.elem_ct(t.pmd_PARA,_chunk,txt));
               return t.pmd_PARA; }
 

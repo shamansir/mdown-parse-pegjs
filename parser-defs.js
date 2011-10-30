@@ -487,8 +487,6 @@ function release_waiters(state) {
 function parse_raw(state, data) {
     if (data.length === 0) return;
 
-    //console.log('~( ' + util.inspect(data,false,3) + ' )~');
-
     // COLLECTING / PACKING DATA
     var bquotes = []; // contains strings with joined chunks, grouped by same level
     var positions = []; // contains arrays of actual positions, for each character
@@ -507,10 +505,8 @@ function parse_raw(state, data) {
             bqidx++; // switch to next bquote if level changed
             plvl = nlvl; // save new level as previous
         }
-        console.log('text: ' + data[i].text);
         clen = data[i].text.length; // length of current chunk
         st = data[i].start; // current chunk start position
-        console.log('clen: ' + clen + '; st: ' + st);
         if (bquotes[bqidx] === undefined) bquotes[bqidx] = ""; // init with empty string
         if (positions[bqidx] === undefined) positions[bqidx] = []; // init with empty array
         // concat current text with new chunk text
@@ -525,25 +521,11 @@ function parse_raw(state, data) {
            { throw new Error('lengths not matched, this should not happened!'); }
     }
 
-    console.log('{{ ' + util.inspect(bquotes,false,5) + ' }}');
-    console.log('{{ ' + util.inspect(positions,false,5) + ' }}');    
-
-    console.log('PARSING TIME!');
-
     // PARSING TIME!
     var parsed;
     for (var i = 0; i < bquotes.length; i++) {
-        console.log('parsing ' + i + ' (' + bquotes[i] + ')');
         parsed = $_parser.parse(bquotes[i]);
-        console.log(parsed.info(0));
-        //console.log('parsed: ' + util.inspect(parsed.chain,false,5));
         chain_travel(parsed.chain, function(elem) {
-            console.log('got ' + elem);
-            console.log('pos[i].length ' + positions[i].length);
-            console.log('adding ' + make_element_i(state, elem.type,
-                                       positions[i][elem.pos],
-                                       positions[i][elem.end-1],
-                                       elem.text));
             add_element(state,
                         make_element_i(state, elem.type,
                                        positions[i][elem.pos],

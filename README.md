@@ -17,9 +17,10 @@ Sources
 * [My Customized PegJS Implementation][] with `chunk` variables inside actions and merged with [PegJS predicate fix][].  
 * [PegC GUI-oriented Markdown parser][] by [Ali Rantakari][], the place where I've found a parser and copied it and now I am modifying it for JavaScript
 * [PegC Markdown parser][] by [John MacFarlane][], the version the previous author adapted to implement his GUI-oriented version and in fact the actual and the main PegC parser (and I am taking parts from there to include new things here)
-* [PegC][], itself
+* [PegC][] by [Stephan Beal][], itself
 * [PegHS Markdown parser][], again by [John MacFarlane][], if you are interested
 * [Codemirror 2][], the nerdy JS-written any-language source-code editor I plan to integrate with
+* [MDTest 1.1][] by [Michel Fortin][]
 
 The Development State
 ---------------------
@@ -35,18 +36,19 @@ Finished
 * Top-level verbatims
 * Links, all modifications
 * Images, all modifications
-* Oh, all that stuff except complex lists and blockqoutes
+* Oh, all that stuff except complex lists
 
 Not finished
 
 (They were working some not ideal way, but I am currently refactoring this part)
 
-* Blockquotes and complex blockquotes
 * Nested lists and blocks inside them
 * Different extra syntax
 * Search over the new stuff in [PegC Markdown parser][] implementation
 * Test over for for [Markdown Syntax][]
 * Check out [Markdown Gotchas][]
+* Test with [MDTest 1.1][] by [Michel Fortin][]
+* Support [Markdown Extra][]
 
 So currently, the *lists* are parsed ok, but I plan to modify their rules to support complex indentations. 
 
@@ -93,6 +95,7 @@ Run in node directory (or with `-g`):
 
 [Markdown]: http://daringfireball.net/projects/markdown/syntax
 [Markdown Syntax]: http://daringfireball.net/projects/markdown/syntax
+[Markdown Extra]: http://michelf.com/projects/php-markdown/extra/
 [Codemirror 2]: http://codemirror.net/
 
 [PegC]: http://fossil.wanderinghorse.net/repos/pegc/index.cgi/index
@@ -110,6 +113,8 @@ Run in node directory (or with `-g`):
 [Ali Rantakari]: http://hasseg.org
 [Dominic Baggott]: http://www.evilstreak.co.uk/
 [Corey Innis]: http://coolerator.net/
+[Michel Fortin]: http://michelf.com/
+[Stephan Beal]: http://wanderinghorse.net/home/stephan
 
 [Showdown]: https://github.com/coreyti/showdown
 [MarkdownJS]: https://github.com/evilstreak/markdown-js/blob/master/lib/markdown.js
@@ -119,3 +124,5 @@ Run in node directory (or with `-g`):
 
 [node.js]: http://nodejs.org/#download
 [npm]: http://npmjs.org/
+[MDTest 1.0]: http://six.pairlist.net/pipermail/markdown-discuss/2007-July/000674.html
+[MDTest 1.1]: http://git.michelf.com/mdtest/

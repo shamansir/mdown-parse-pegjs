@@ -6,7 +6,7 @@ var pegPath = process.cwd() + '/';
 try {
     var parser = PEG.buildParser(
                  fs.readFileSync(pegPath + 'markdown.pegjs', 'utf-8'));
-    var testContent = fs.readFileSync(pegPath + 'mdown-test/single-block-test.md', 'utf-8');
+    var testContent = fs.readFileSync(pegPath + 'mdown-test/manual/single-block-test.md', 'utf-8');
     //var testContent = fs.readFileSync(pegPath + 'mdown-test/progressing.md', 'utf-8');
 
     //var parser = PEG.buildParser(

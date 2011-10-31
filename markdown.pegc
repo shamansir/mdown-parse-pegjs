@@ -548,7 +548,7 @@ AutoLink = AutoLinkUrl | AutoLinkEmail
 AutoLinkUrl =   '<' < [A-Za-z]+ "://" ( !Newline !'>' . )+ > '>'
                 {   $$ = mk_link(mk_str(yytext), yytext, ""); }
 
-AutoLinkEmail = '<' < [-A-Za-z0-9+_]+ '@' ( !Newline !'>' . )+ > '>'
+AutoLinkEmail = '<' ( "mailto:" )? < [-A-Za-z0-9+_./!%~$]+ '@' ( !Newline !'>' . )+ > '>'
                 {   char *mailto = malloc(strlen(yytext) + 8);
                     sprintf(mailto, "mailto:%s", yytext);
                     $$ = mk_link(mk_str(yytext), mailto, "");
@@ -568,8 +568,8 @@ Label = '[' ( !'^' &{ extension(EXT_NOTES) } | &. &{ !extension(EXT_NOTES) } )
         ']'
         { $$ = mk_list(LIST, a); }
 
-RefSrc = < Nonspacechar+ >
-         { $$ = mk_str(yytext);
+RefSrc = < Nonspacechar+ > 
+         { $$ = mk_str(yytext); 
            $$->key = HTML; }
 
 RefTitle =  ( RefTitleSingle | RefTitleDouble | RefTitleParens | EmptyTitle )
@@ -743,4 +743,3 @@ RawNoteBlock =  a:StartList
 %%
 
 #include "parsing_functions.c"
-

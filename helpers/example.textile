@@ -1,0 +1,635 @@
+h2{color:green}. This is a title
+
+h3. This is a subhead
+
+p{color:red}. This is some text of dubious character. Isn't the use of "quotes" just lazy writing -- and theft of 'intellectual property' besides? I think the time has come to see a block quote.
+
+bq[fr]. This is a block quote. I'll admit it's not the most exciting block quote ever devised.
+
+Simple list:
+
+#{color:blue} one
+# two
+# three
+
+Multi-level list:
+
+# one
+## aye
+## bee
+## see
+# two
+## x
+## y
+# three
+
+Mixed list:
+
+* Point one
+* Point two
+## Step 1
+## Step 2
+## Step 3
+* Point three
+** Sub point 1
+** Sub point 2
+
+
+Well, that went well. How about we insert an <a href="/" title="watch out">old-fashioned hypertext link</a>? Will the quote marks in the tags get messed up? No!
+
+"This is a link (optional title)":http://www.textism.com
+
+table{border:1px solid black}.
+|_. this|_. is|_. a|_. header|
+<{background:gray}. |\2. this is|{background:red;width:200px}. a|^<>{height:200px}. row|
+|this|<>{padding:10px}. is|^. another|(bob#bob). row|
+
+An image:
+
+!/common/textist.gif(optional alt text)!
+
+# Librarians rule
+# Yes they do
+# But you knew that
+
+Some more text of dubious character. Here is a noisome string of CAPITAL letters. Here is something we want to _emphasize_. 
+That was a linebreak. And something to indicate *strength*. Of course I could use <em>my own HTML tags</em> if I <strong>felt</strong> like it.
+
+h3. Coding
+
+This <code>is some code, "isn't it"</code>. Watch those quote marks! Now for some preformatted text:
+
+<pre>
+<code>
+	$text = str_replace("<p>%::%</p>","",$text);
+	$text = str_replace("%::%</p>","",$text);
+	$text = str_replace("%::%","",$text);
+
+</code>
+</pre>
+
+This isn't code.
+
+
+So you see, my friends:
+
+* The time is now
+* The time is not later
+* The time is not yesterday
+* We must act
+
+
+
+Features in Textile 2.2:
+
+* Enabled "UTF-8 characters":#utf in uppercased acronyms if Unicode compiled into PCRE
+* Fixed rendering bug if acronym title contains 3+ uppercase chars -- thanks Ruud
+* Handle single quotes better if Unicode compiled into PCRE. Fixes Issue 26
+* Fixed double span class="caps" in tables. Fixes Issue 61
+* Fixed backwards apostrophes after formatted text. Fixes Issue 71
+* Fixed link creation regex bug
+* Can now parse "nested textile entities":#nesting up to 5 deep. Fixes Issue 1
+* "Table improvements":#table:
+** Added thead, tbody, tfoot support
+** Added caption support
+** Added summary support
+** Added colgroup support
+** Fixed 'trailing whitespace after pipe character breaks table' bug
+* Added "self-link":#self-link syntax
+* Added "Textile comments":#comments
+* Added ability to use "class/id/lang/style in list items":#lists
+* Added auto-numbering "labelled notes":#notes
+* Some whitespace code layout prettification
+* Added glyphs for quarter fractions: (1/4), (1/2) & (3/4); degrees: (o)C and plusminus (+/-).
+
+h2(#utf). UTF-8 support
+
+In Textile 2.0, foreign characters broke various aspects of Textile:
+
+* Acronyms with accented characters were not treated as part of the acronym
+* Apostrophes and quotes around foreign characters often rendered incorrect quote marks
+
+This is fixed in 2.2 *if PCRE has been compiled into your version of PHP*. People who do not have this enabled will still see the old behaviour.
+
+h2(#nesting). Nesting entities
+
+Since r1106 (November 2005), some nesting configurations have been buggy, for example bold-italic:
+
+bc. _*some text*_
+
+This is now fixed and you can nest up to five entities without incident, in any order:
+
+bc. _*-^some text^-*_
+
+The reason it's five is arbitrary: it could be any number but this was felt to be a good compromise between the reality of actually _wanting_ to nest this many entities vs speed of execution and trying to prevent infinite loops. If anyone can foresee a valid sitation where 5 might not be enough, let us know. It's just a constant set in the header block.
+
+h2(#self-link). Self-links
+
+If you wish to link to a URL and want the URL itself in the text, Textile 2.0 requires you to do this:
+
+bc. See "http://stefdawson.com/sw":http://stefdawson.com/sw
+
+Under Textile 2.2 you can now use the following 'dollar' shorthand (dollar because it's common to use the dollar as a reference to 'this' or 'self' in jQuery/mootools etc):
+
+bc. See "$":http://stefdawson.com/sw
+
+h2(#table). Table support
+
+Tables have been extended to add greater control over their presentation. Each of the following areas employs similar syntax to existing table characters wherever possible.
+
+h3. Caption
+
+Add a table caption using the following on its own row. It *must* appear above your first table row/thead declaration. The usual (class#id){style}[lang] attributes can be used before the dot.
+
+bc. |=. Your caption goes here
+
+h3. Summary
+
+Place a summary of your table (for screen readers) after the optional table definition:
+
+bc. table(myTable). This is a journey into sound. Stereophonic sound.
+
+h3. <thead>
+
+Put this sequence on its own line -- usually immediately before your @|_.@ row(s) -- to output a @<thead>@ tag block and thus designate them as header information:
+
+bc. |^.
+
+The usual (class#id){style}[lang] attributes can be used before the dot.
+
+h3. <tfoot>
+
+Put this on its own line before some table rows to designate what follows as footer content:
+
+bc. |~.
+
+The usual (class#id){style}[lang] attributes can be used before the dot. Note that if adhering to HTML 4, the tfoot must occur _before_ any tbody sections if you want the page to validate.
+
+h3. <tbody>
+
+Put this on its own line before regular table rows to designate them as body content:
+
+bc. |-.
+
+The usual (class#id){style}[lang] attributes can be used before the dot. Multiple tbody tags can be used to separate logical blocks of content.
+
+h3. colgroups
+
+Column group specification is supported using the following syntax on its own row. It *must* appear above your first table row/thead declaration (either before or after any caption) :
+
+bc. |:.
+
+Specify the usual (class#id){style}[lang]\colspan attributes before the dot to affect all columns in the colgroup. Any number appearing after the dot is considered to be a @width@ designator for the entire colgroup.
+
+You may also add 'cells' to this row, each of which will specify the @span@ and @width@ of a @<col>@ tag. Examples:
+
+h4. Specify @width@ of all columns in the @colgroup@
+
+bc. |:. 100|
+
+bc. <colgroup width="100">
+</colgroup>
+
+h4. Specify @width@ and @span@ in a @colgroup@ tag
+
+bc. |:\3. 100|
+
+bc. <colgroup span="3" width="100">
+</colgroup>
+
+h4. Specify individual @<col>@ tags to control the layout of columns
+
+bc. |:. |\2. |\3. 50|
+
+bc. <colgroup>
+   <col span="2" />
+   <col span="3" width="50" />
+</colgroup>
+
+h4. Designate a default @span@ and @width@ (plus class/id) to the colgroup, then override the widths of some columns
+
+bc. |:\5(grpclass#grpid). 200 | 100 |||80|
+
+bc. <colgroup class="grpclass" id="grpid" span="5" width="200">
+   <col width="100" />
+   <col />
+   <col />
+   <col width="80" />
+</colgroup>
+
+h2(#lists). Enhanced lists
+
+In Textile 2.0 you were only permitted to put a class/ID/lang/style attribute on the very first item in the list, which applied the markup to the container.
+
+Textile 2.2 lifts this restriction so you can now put the class/ID/lang/style modifiers on any list item; this works for ordered, unordered and definition lists.
+
+The current behaviour is retained if you put the item on the first element, i.e.:
+
+bc. #(class#id) Item 1
+# Item 2
+# Item 3
+
+Renders:
+
+bc. <ol class="class" id="id">
+  <li>Item 1</li>
+  <li>Item 2</li>
+  <li>Item 3</li>
+</ol>
+
+If you also wish to put a class on individual items in the list you simply make the first list item end with a '.' dot immediately after the attributes. That holds the 'container' modifiers, and then proceed as normal. viz:
+
+bc. #(class#id).
+#(first) Item 1
+#(second) Item 2
+#(third) Item 3
+
+Gives:
+
+bc. <ol class="class" id="id">
+  <li class="first">Item 1</li>
+  <li class="second">Item 2</li>
+  <li class="third">Item 3</li>
+</ol>
+
+p=. *IMPORTANT*: _Due to the way the lists are processed, you need a '.' after the attributes of your 'empty' list item to trigger the correct behaviour._
+
+If you don't want to add a class to the container, just use:
+
+bc. #.
+
+as the first item -- *don't forget the dot!*
+
+
+h2(#notes). Auto-numbered notes
+
+When referencing or citing sources in body text you can employ footnotes. But these are explicitly numbered and if you therefore alter the order of the references (by inserting one or deleting/moving others) you must manually renumber all the footnotes in the article.
+
+Using notes you can label references in your body text, set up a definition for each of those labels, and then display the list of references at a suitable place in your body text. Crucially, the numbers will be automatically assigned when you save the article and recalculated if necessary as you alter the document.
+
+Also:
+
+# References from the main body may be hyperlinked to the references section or not -- either globally or on a note-by-note basis
+# Notes listed in the references section can optionally backlink to the place(s) they were used. Again, you can globally control whether backrefs are employed and, if so, whether the backref is just the first occurrence of the reference or all cited references. You may also override the backrefs on a note-by-note basis
+
+h3. Example notes
+
+h4. Textile
+
+bc.. Tim Berners-Lee is one of the pioneer voices
+in favour of Net Neutrality[#netneutral] and
+has expressed the view that ISPs should
+supply "connectivity with no strings
+attached"[#netneutral!] [#tbl_quote]
+
+Berners-Lee admitted that the forward slashes
+("//") in a web address were actually unnecessary.
+He told the newspaper that he could easily have
+designed URLs not to have the forward slashes.
+"... it seemed like a good idea at the time,"[#slashes]
+
+note#netneutral. "Web creator rejects net tracking":http://news.bbc.co.uk/2/hi/technology/7613201.stm. BBC. 15 September 2008
+
+note#tbl_quote. "Web inventor's warning on spy software":http://www.telegraph.co.uk/news/uknews/1581938/Web-inventor%27s-warning-on-spy-software.html. The Daily Telegraph (London). 25 May 2008
+
+note#slashes. "Berners-Lee 'sorry' for slashes":http://news.bbc.co.uk/1/hi/technology/8306631.stm. BBC. 14 October 2009
+
+notelist.
+
+p. Some other text...
+
+h4. Rendered
+
+Tim Berners-Lee is one of the pioneer voices in favour of Net Neutrality[#netneutral] and has expressed the view that ISPs should supply "connectivity with no strings attached"[#netneutral!] [#tbl_quote]
+
+Berners-Lee admitted that the forward slashes ("//") in a web address were actually unnecessary. He told the newspaper that he could easily have designed URLs not to have the forward slashes. "... it seemed like a good idea at the time,"[#slashes]
+
+note#netneutral. "Web creator rejects net tracking":http://news.bbc.co.uk/2/hi/technology/7613201.stm. BBC. 15 September 2008
+
+note#tbl_quote. "Web inventor's warning on spy software":http://www.telegraph.co.uk/news/uknews/1581938/Web-inventor%27s-warning-on-spy-software.html. The Daily Telegraph (London). 25 May 2008
+
+note#slashes. "Berners-Lee 'sorry' for slashes":http://news.bbc.co.uk/1/hi/technology/8306631.stm. BBC. 14 October 2009
+
+h4. Here is the list of notes:
+
+notelist.
+
+The _a b c_ backref links can be altered by specifying the starting character in the notelist tag:
+
+bc. notelist:1.
+
+See the "Online Textile tester":http://textile.sitemonks.com/ for more examples and to try this all out for yourself.
+
+h2(#comments). Textile comments
+
+Textile 2.2 introduces the notion of a comment. So now, instead of using @<txp:hide>@ in an article -- which is fine in Forms, but can look messy in an article -- you can do this:
+
+bc. ###. For your eyes only. Only for yoooooouuu...
+
+###. For internal use only -- nothing to see here, please disperse. This is not rendered in Textile 2.2
+
+h3. Apostrophes, Quotation Marks & Spans.
+
+Support of foreign characters was lacking in textile 2.0 so textile 2.2 now adds support for unicode matching.
+
+p=. Où est l'école, l'église s'il vous plaît?
+
+Textile 2.0 has a few problems with the combination of phrase modifiers (which add spans around inline elements), quotation marks and apostrophe-'s'.
+
+Not all combinations of modifiers work under textile 2.0...
+
+p=. *_The_* _*Prisoner*_
+
+
+
+...it also has a problem closing smart-quotes around modified text...
+
+p=. "An emphasised _word._" & "*A spanned phrase.*"
+
+
+
+Apostrophe-'s' has a few problems too...
+
+p=. "*Here*'s a word!"
+
+
+
+...and textile 2.0 leaves the closing quotation mark untouched around quoted links...
+
+p=. "Please visit our "Textile Test Page":http://textile.sitemonks.com"
+
+
+
+Look carefully at the output from textile 2.0 -- you'll see a few oddities.
+
+h3. Footnote IDs.
+
+Under textile 2.0 footnotes had a duplicate id bug[1] when you specified your own id. Look closely at the underlying markup generated by textile 2.0 to spot the problem.
+
+fn1(#myid). Making the generated markup invalid.
+
+Textile 2.2 pushes the randomly generated ID into the superscript to overcome this.
+
+h3. Caps Span Problems.
+
+Under textile 2.0 the caps span was sometimes left out of Table cells, acronym definitions and in non-English text.
+
+Acronyms...
+
+p=. Tell me, what is AJAX(Asynchronous Javascript and XML), please?
+
+Table cells...
+
+| IBM | Textile 2.0 will double span the caps in this row... |
+| Foreign EXPÓŅÉNTIAL | ...yet will not span these capitals! |
+
+Check the underlying HTML to see the problems.
+
+h3. Footnote Link Overrides.
+
+Under textile 2.2 you can now tell textile how to handle the links between footnotes[1!] and the places which reference said (a very long and silly string to allow you to test what I've just said about the places that reference the) footnotes[1!].
+
+fn1^. This footnote links back to where it was _first_ referenced. The references have been told not to link to the footnote via the use of the exclamation mark '!'.
+
+h3. Lists
+
+Textile 2.2 allows you to add classes, ids, language and style markers to individual list items.
+
+Let's try unordered lists...
+
+*(list_class#unord_id){color:blue} Blue bulleted
+*(second). List
+*(third).Here
+* .htaccess doesn't cause a problem
+* No dot
+*.With a dot
+*. With a dot-space
+*. With *a bold* ^dot-space^
+**.
+**(under1) A new sub list
+**(under2) With classes
+**(under3) But no containing class
+* A final, regular list item
+
+...ordered lists...
+
+#(list_class#ord_id){color:red} Red ordered
+#(second). List
+#(third).Here
+#(fourth) .htaccess
+#(fifth)..htaccess works, even in extreme cases
+# No dot
+#.With dot
+#. With dot-space
+#. With *_a bold-italic_* dot-space combo
+##[de-de].
+##(german1) This subgroup is in German
+##(german2) Haben Sie einen Bleistiftspitzer?
+##(german3) See?!
+#(tenth) Tenth main item
+
+...or definition lists...
+
+;(list_class#defid).
+;(first-term). Term 1
+:(def1) Definition here
+:(def1) Another definition of Term 1
+;;(subgroup) A sub _*term*_ with group class
+::(under1) With
+::(under2) Subs
+
+If you want to apply different attributes to the list and the first item then simply use a full stop '.' as the first line of the list (or sublist)...
+
+*(listclass#ul-list-id).
+*(first) First
+**(sublistclass).
+**(subclass)[en] Sublist item
+** Another sublist item
+**(selected) Last sublist item
+*(#second-item-id) Second
+
+h3. And some cases that might confuse the list parser...
+
+*Here is a comment*
+
+Here is *(class)a comment*
+
+*(class)Here is* a 
+*class*
+
+h3. Definition Lists
+
+p=. A nested list with multiple terms, multiple definitions
+
+;(defclass#defid) Linux
+: ^[n]^ An open-source version of the UNIX operating system.
+: ^[n]^ The free Unix workalike created by Linus Torvalds and friends starting about 1991.
+; Windoze
+: A closed-source heap of junk masquerading as an operating system. Won't let you do anything unless you absolve Micro$oft of all blame first. Before _*every*_ action.
+; OSX
+: The Apple platform as it should have been in the '90s; based on UNIX. OSX is much copied and is now also called _Windows 7_.
+;;(subdefclass) 
+;;[en-us] Center
+;;[en-gb] Centre
+::{font-style:italic} The middle of something; like a road or a circle, or the Universe in the case of Steve Jobs. Let's italicise it inline.
+Note this definition block has its own @subdefclass@ and the terms are tagged with their respective language strings.
+;;[en-us] Sidewalk
+;;[en-gb] Pavement
+:: Walkway consisting of a paved area for pedestrians; usually beside a street or roadway.
+;;; Jaywalker
+::: Someone who crosses the street without obeying the Walk/Don't Walk signs.
+;;; Starbucks
+::: A fast-coffee chain found on every main street in every city in the world.
+Serves average coffee and is full of people on laptops who are too self important to work in an office, and wish to be seen working hard.
+:: Material used to pave an area, usually for pedestrians.
+: The underlying architecture behind such Appley gizmos as the iPod, iPhone and iPad.
+; AmigaOS
+: An awesome Operating System tightly bound to the hardware, sadly destroyed by Commodore's poor marketing.
+
+h3. Tables
+
+p=. Full table with summary, caption, colgroups, thead, tfoot, 2x tbody
+
+table(#dvds){border-collapse:collapse}. Great films on DVD employing Textile summary, caption, thead, tfoot, two tbody elements and colgroups
+|:\3. 100 |{background:#ddd}|250||50|300|
+|={font-size:140%;margin-bottom:15px}. DVDs with two Textiled tbody elements
+|^(header).
+|_. Title |_. Starring |_. Director |_. Writer |_. Notes |
+|~(footer).
+|\5=. This is the tfoot, centred |
+|-(toplist){background:#c5f7f6}.
+| _The Usual Suspects_ | Benicio Del Toro, Gabriel Byrne, Stephen Baldwin, Kevin Spacey | Bryan Singer | Chris McQuarrie | One of the finest films ever made |
+| _Se7en_ | Morgan Freeman, Brad Pitt, Kevin Spacey | David Fincher | Andrew Kevin Walker | Great psychological thriller |
+| _Primer_ | David Sullivan, Shane Carruth | Shane Carruth | Shane Carruth | Amazing insight into trust and human psychology through science fiction. Terrific! |
+| _District 9_ | Sharlto Copley, Jason Cope | Neill Blomkamp | Neill Blomkamp, Terri Tatchell | Social commentary layered on thick, but boy is it done well |
+|-(medlist){background:#e7e895;}.
+| _Arlington Road_ | Tim Robbins, Jeff Bridges | Mark Pellington | Ehren Kruger | Awesome study in neighbourly relations |
+| _Phone Booth_ | Colin Farrell, Kiefer Sutherland, Forest Whitaker | Joel Schumacher | Larry Cohen | Edge-of-the-seat stuff in this short but brilliantly executed thriller |
+
+h3. Auto-numbered Notes.
+
+Textile 2.2 adds auto-numbered notes to your arsenal. These are intended to allow very simple self-ordering lists of items. Note support is made up of three components...
+
+# Definitions of the notes themselves. These can appear by themselves on any new line in your document.
+# References, scattered throughout your document, to the notes.
+# One or more placeholders showing where the sequenced list of notes should appear in your document.
+
+
+
+h4. Note Definitions.
+
+Note definitions must start on their own line. Each definition has a _*label*_ which can be any alphabetic or numeric character, underscore, dash or colon...
+
+bc. note#label1. Note one's text goes here.
+
+bc. note#label2. This note's text goes here.
+
+Each of these definitions will be removed from your text's flow as textile processes the document and will be remembered in textile in order to allow the references and the note list to be generated. Notes can reference other notes, or even footnotes should you wish to mix-n-match the two.
+
+
+
+h4. Note References.
+
+You can make reference to any note in a very similar manner to footnotes -- except that this time you must use the note's _*label*_ (including the # character.) For example, you might write...
+
+bc. scientists say[#label] the moon is...
+
+As textile processes the document it uses the order in which it finds such references to sequence the note definitions into an ordered note list. It inserts superscripts (linked or unlinked, using the same format as footnote link overrides) that will correspond to the correct note in the list.
+
+If you wish to refer to a note _*without*_ linking to it then add an exclamation mark after the label.
+
+bc. scientists say[#label!] the moon is...
+
+You can refer to the same note as many times as you wish.
+
+
+
+h4. Note List (or lists.)
+
+You can tell textile where to place the list of notes in your document using the notelist tag.
+
+By default the list will show only the notes which are actually referenced in your document, though you can also tell the notelist to include the unreferenced notes too using the '+' modifier. You can also control the way the notes in the list link back to their references. By default, all backlinks will be shown.
+
+|^.
+|_. Textile 2.2... |_. Shows... |
+|-.
+| @notelist.  @ | ...referenced notes (with links back to every reference made to them) |
+| @notelist+. @ | ...referenced notes (with links back to every reference made to them) followed by the unreferenced notes. |
+| @notelist^. @ | ...referenced notes (with one link back to the first reference made to each note) |
+| @notelist^+.@ | ...referenced notes (with one link back to the first reference made to each note) followed by unreferenced notes. |
+| @notelist!. @ | ...referenced notes (with no links back to the references) |
+| @notelist!+.@ | ...referenced notes (with no links back to the references) followed by unreferenced notes. |
+
+You can override the list's link settings by appending a link override character to the end of any note's label. Like this...
+
+|^.
+|_. Textile 2.2... |_. Shows... |
+|-.
+| @note#somelabel!.@ | ...this note with no back links. |
+| @note#somelabel^.@ | ...this note with only the first back link. |
+| @note#somelabel*.@ | ...this note with all the back links. |
+
+
+h4. Note List Backlink Sequence characters.
+
+When notes in a note list have references then they can show links from the note, back to to the place in the text where they were referenced. By default, the letter used in this backlink is 'a'. For notes that have multiple backlinks, each link is given the next letter in the alphabet. If you wish to use a different initial backlink character you can define the starting character before the list's link setting (if any) like this...
+
+bc. notelist:α^+.
+
+... where greek *α* will be the text of the first backlink, followed by *β* and so on. Any backlink starting character must preceed the list backlink setting and the unreferenced setting.
+
+
+h4. Examples...
+
+French cheese production is classified under four categories, and PDO/AOC rules dictate which category(ies) each protected cheese may be assigned to; Fermier[#Fermier], Artisanal[#Artisanal], Coopérative[#Coopérative] or Industriel[#Industriel]. Of the four categories, it is the opinion of this author, that Artisanal[#Artisanal] cheeses are the best available.
+
+note#Unrefereced. See "Appellation d'Origine Contrôlée":http://en.wikipedia.org/wiki/Appellation_d%27Origine_Contr%C3%B4l%C3%A9e (AOC) system for more details.
+
+note#Fermier. A farmhouse cheese, which is produced on the farm where the milk is produced.
+
+note#Artisanal. A producer producing cheese in relatively small quantities using milk from their own farm, but may also purchase milk from local farms.
+
+note#Coopérative. A dairy with local milk producers in an area that have joined to produce cheese. In larger coopératives quantities of cheese produced may be relatively large, akin to some industriel producers (many may be classed as factory-made[#Industriel]).
+
+note#Industriel. A factory-made cheese from milk sourced locally or regionally, perhaps all over France (depending on the AOC/PDO regulations for specific cheeses).
+
+h3. Cheese notes (with Greek back ref. chars.)...
+
+notelist:α+.
+
+h3. Cheese notes (with English back ref. chars.)...
+
+notelist+.
+
+h3. Textile Comments.
+
+###. This is a textile comment block.
+It will be removed from your document.
+
+We've added the ability to include comments in your textile that will be stripped from your document's output.
+
+Just use three '#' signs and a full stop to start your comment block. Like this...
+
+bc. ###. Here's an example single line comment.
+
+...or this...
+
+bc. ###. Here's an example
+multiline comment.
+
+... or...
+
+bc.. ###.. ***************
+** This multi-line comment
+** will keep going and going
+
+** even if you put blank lines in.
+
+** It'll only stop when it reaches a paragraph marker.
+***************
+
+p. Try textiling this snippet to see the comments disappear!
+
+###. Check that this one doesn't
+appear in the textile 2.2 results below.
+
